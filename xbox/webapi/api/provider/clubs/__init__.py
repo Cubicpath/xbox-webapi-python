@@ -71,7 +71,7 @@ class ClubProvider(BaseProvider):
         )
         resp.raise_for_status()
 
-        return ClubSummary.parse_raw(await resp.text())
+        return ClubSummary.parse_raw(resp.text)
 
     async def get_clubs_owned(self, **kwargs) -> OwnedClubsResponse:
         """Get list of clubs owned by the caller."""
@@ -83,7 +83,7 @@ class ClubProvider(BaseProvider):
         )
         resp.raise_for_status()
 
-        return OwnedClubsResponse.parse_raw(await resp.text())
+        return OwnedClubsResponse.parse_raw(resp.text)
 
     async def claim_club(self, name: str, **kwargs) -> ClubReservation:
         """Reserve a club name for use in create_club().
@@ -103,7 +103,7 @@ class ClubProvider(BaseProvider):
             url, headers=self.HEADERS_CLUBACCOUNTS, json=data, **kwargs
         )
         resp.raise_for_status()
-        return ClubReservation.parse_raw(await resp.text())
+        return ClubReservation.parse_raw(resp.text)
 
     async def create_club(
         self,
@@ -142,7 +142,7 @@ class ClubProvider(BaseProvider):
         )
         resp.raise_for_status()
 
-        return ClubSummary.parse_raw(await resp.text())
+        return ClubSummary.parse_raw(resp.text)
 
     async def rename_club(self, club_id: str, name: str, **kwargs) -> ClubSummary:
         """Rename a club with the given name.
@@ -169,7 +169,7 @@ class ClubProvider(BaseProvider):
         )
         resp.raise_for_status()
 
-        return ClubSummary.parse_raw(await resp.text())
+        return ClubSummary.parse_raw(resp.text)
 
     async def delete_club(
         self, club_id: str, actor: Optional[str] = None, **kwargs
@@ -240,7 +240,7 @@ class ClubProvider(BaseProvider):
             url, headers=self.HEADERS_CLUBHUB, **kwargs
         )
         resp.raise_for_status()
-        return SearchClubsResponse.parse_raw(await resp.text())
+        return SearchClubsResponse.parse_raw(resp.text)
 
     async def get_club(
         self, club_id: str, decorations: Optional[List[str]] = None, **kwargs
@@ -281,7 +281,7 @@ class ClubProvider(BaseProvider):
             url, headers=self.HEADERS_CLUBHUB, **kwargs
         )
         resp.raise_for_status()
-        return [club for club in SearchClubsResponse.parse_raw(await resp.text()).clubs]
+        return [club for club in SearchClubsResponse.parse_raw(resp.text).clubs]
 
     async def get_club_recommendations(self, **kwargs) -> List[Club]:
         """Get clubs recommendations for the caller."""
@@ -292,7 +292,7 @@ class ClubProvider(BaseProvider):
         )
         resp.raise_for_status()
 
-        return [club for club in SearchClubsResponse.parse_raw(await resp.text()).clubs]
+        return [club for club in SearchClubsResponse.parse_raw(resp.text).clubs]
 
     async def search_clubs(
         self,
@@ -311,7 +311,7 @@ class ClubProvider(BaseProvider):
             url, headers=self.HEADERS_CLUBHUB, params=params or None, **kwargs
         )
         resp.raise_for_status()
-        return SearchClubsResponse.parse_raw(await resp.text())
+        return SearchClubsResponse.parse_raw(resp.text)
 
     # CLUB PRESENCE
     # ---------------------------------------------------------------------------
@@ -322,7 +322,7 @@ class ClubProvider(BaseProvider):
             url, headers=self.HEADERS_CLUBPRESENCE, **kwargs
         )
         resp.raise_for_status()
-        return GetPresenceResponse.parse_raw(await resp.text())
+        return GetPresenceResponse.parse_raw(resp.text)
 
     async def set_presence_within_club(
         self, club_id: str, xuid: str, presence: ClubPresence, **kwargs
@@ -362,7 +362,7 @@ class ClubProvider(BaseProvider):
         resp = await method(url, headers=self.HEADERS_CLUBROSTER, **kwargs)
 
         resp.raise_for_status()
-        return UpdateRolesResponse.parse_raw(await resp.text())
+        return UpdateRolesResponse.parse_raw(resp.text)
 
     async def _set_users_club_roles(
         self, club_id: str, xuid: str, role: ClubRole, add_role: bool, **kwargs
@@ -388,7 +388,7 @@ class ClubProvider(BaseProvider):
         resp = await method(url, headers=self.HEADERS_CLUBROSTER, json=data, **kwargs)
 
         resp.raise_for_status()
-        return UpdateRolesResponse.parse_raw(await resp.text())
+        return UpdateRolesResponse.parse_raw(resp.text)
 
     async def add_user_to_club(
         self, club_id: str, xuid: Optional[str] = None, **kwargs
