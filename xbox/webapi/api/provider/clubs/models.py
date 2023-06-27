@@ -47,6 +47,12 @@ class ClubPresence(str, Enum):
     IN_PARTY = "InParty"  # UNDOCUMENTED -- UNCONFIRMED ENUM VALUE
 
 
+class ClubJoinability(str, Enum):
+    UNKNOWN = "Unknown"
+    REQUEST_TO_JOIN = "OpenJoin"
+    INVITE_ONLY = "InviteOnly"
+
+
 class PreferredColor(CamelCaseModel):
     primary_color: Optional[str]
     secondary_color: Optional[str]
@@ -63,6 +69,36 @@ class DeepLinks(CamelCaseModel):
     pc: Optional[List[DeepLink]]
     iOS: Optional[List[DeepLink]]
     android: Optional[List[DeepLink]]
+
+
+class ClubSettingsContract(CamelCaseModel):
+    description: Optional[str]
+    creation_date_utc: datetime
+    background_image_url: Optional[str]
+    display_image_url: Optional[str]
+    preferred_color: Optional[PreferredColor]
+    activity_feed_enabled: Optional[bool]
+    chat_enabled: Optional[bool]
+    lfg_enabled: Optional[bool]
+    preferred_locale: Optional[str]
+    request_to_join_enabled: Optional[bool]
+    leave_enabled: Optional[bool]
+    transfer_ownership_enabled: Optional[bool]
+    is_promoted_club: Optional[bool]
+    tags: Optional[List[str]]
+    titles: Optional[List[str]]
+    who_can_post_to_feed: Optional[ClubRole]
+    who_can_invite: Optional[ClubRole]
+    who_can_chat: Optional[ClubRole]
+    who_can_create_lfg: Optional[ClubRole]
+    who_can_join_lfg: Optional[ClubRole]
+    mature_content_enabled: Optional[bool]
+    watch_club_titles_only: Optional[bool]
+    get_recommendation_enabled: Optional[bool]
+    search_enabled: Optional[bool]
+    delete_enabled: Optional[bool]
+    rename_enabled: Optional[bool]
+    joinability: Optional[ClubJoinability]
 
 
 class ClubSearchFacetResult(CamelCaseModel):

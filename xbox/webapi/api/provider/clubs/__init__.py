@@ -3,10 +3,10 @@ Clubs
 
 Manage clubs and club information.
 
-TODO: Change club settings
 TODO: Club messaging/activity feed
 """
 from collections.abc import Sequence
+import json
 from typing import Dict, List, Optional, Union
 from uuid import UUID
 
@@ -18,6 +18,7 @@ from xbox.webapi.api.provider.clubs.models import (
     ClubRole,
     ClubRootSettings,
     ClubRoster,
+    ClubSettingsContract,
     ClubSummary,
     ClubType,
     ClubUserPresenceRecord,
@@ -27,6 +28,7 @@ from xbox.webapi.api.provider.clubs.models import (
     SuggestedClubsResponse,
     UpdateRolesResponse,
 )
+from xbox.webapi.common.models import to_pascal
 
 _NULL_UUID = UUID(int=0)
 
@@ -35,6 +37,7 @@ class ClubProvider(BaseProvider):
     CLUBACCOUNTS_URL = "https://clubaccounts.xboxlive.com"
     CLUBHUB_URL = "https://clubhub.xboxlive.com"
     CLUBPRESENCE_URL = "https://clubpresence.xboxlive.com"
+    CLUBPROFILE_URL = "https://clubprofile.xboxlive.com"
     CLUBROSTER_URL = "https://clubroster.xboxlive.com"
     # CHATFD_URL = "https://chatfd.xboxlive.com"
     # CLUBSEARCH_URL = 'https://clubsearch.xboxlive.com'
@@ -43,6 +46,7 @@ class ClubProvider(BaseProvider):
     HEADERS_OWNED_CLUBS = HEADERS_CLUBACCOUNTS | {"x-xbl-contract-version": "2"}
     HEADERS_CLUBHUB = {"x-xbl-contract-version": "5", "Accept-Language": "en-US"}
     HEADERS_CLUBPRESENCE = {"x-xbl-contract-version": "1"}
+    HEADERS_CLUBPROFILE = {"x-xbl-contract-version": "2"}
     HEADERS_CLUBROSTER = {"x-xbl-contract-version": "4"}
     # HEADERS_CHATFD = {"x-xbl-contract-version": "1"}
     # HEADERS_CLUBSEARCH = {'x-xbl-contract-version': '2'}
@@ -342,6 +346,49 @@ class ClubProvider(BaseProvider):
         )
         resp.raise_for_status()
         return resp.status == 204
+
+    # CLUB PROFILE
+    # ---------------------------------------------------------------------------
+    async def update_club_profile(self, club_id: str, **kwargs) -> None:
+        """Update club profile settings.
+
+        Settings are passed in as kwarg pairs. Each setting name must be a valid ClubSettingsContract field.
+        All kwargs that fail are passed in as an HTTP kwarg.
+
+        Codes
+            - 413: Description is too large (500 char max).
+            - 1100: Insufficient permissions for write request.
+        """
+        contract = ClubSettingsContract.parse_obj(
+            {"creationDateUtc": "0001-01-01T00:00:00.000Z"}
+        )
+        modified_fields = []
+
+        for key in kwargs.keys():
+            # Skip if not valid setting name.
+            if key not in ClubSettingsContract.__fields_set__:
+                continue
+
+            value = kwargs.pop(key)
+
+            # Update contract fields with new values.
+            # If a value is None, omit it in the contract.
+            if value is not None:
+                setattr(contract, key, value)
+
+            # Ensure modifiedFields are PascalCase.
+            modified_fields.append(to_pascal(key))
+
+        data = {
+            "requestContract": json.loads(contract.json()),
+            "modifiedFields": modified_fields,
+        }
+
+        url = self.CLUBPROFILE_URL + f"/clubs/{club_id}/profile"
+        resp = await self.client.session.post(
+            url, headers=self.HEADERS_CLUBPROFILE, json=data, **kwargs
+        )
+        resp.raise_for_status()
 
     # CLUB ROSTER
     # ---------------------------------------------------------------------------
