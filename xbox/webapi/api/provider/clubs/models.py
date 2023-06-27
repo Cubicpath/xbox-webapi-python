@@ -157,6 +157,11 @@ class ClubRoster(CamelCaseModel):
     banned: Optional[List[ClubRoleRecord]]  # Users who've been banned from the club
 
 
+class TargetRoleRecords(CamelCaseModel):
+    roles: Optional[List[ClubRoleRecord]]
+    localized_role: Optional[ClubRoleRecord]
+
+
 class ClubRecommendationReason(CamelCaseModel):
     localized_text: str  # Localized string giving the reason the club is recommended
 
@@ -300,7 +305,7 @@ class Club(CamelCaseModel):
     club_presence_today_count: int  # Count of members present in the club.
     club_presence_in_game_count: int
     roster: Optional[ClubRoster]
-    target_roles: Optional[Any]
+    target_roles: Optional[TargetRoleRecords]
     recommendation: Optional[ClubRecommendation]
     club_presence: Optional[List[ClubUserPresenceRecord]]
     state: str
