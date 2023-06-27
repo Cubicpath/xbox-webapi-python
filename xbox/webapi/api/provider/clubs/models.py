@@ -143,8 +143,9 @@ class ClubSummary(CamelCaseModel):
     id: str
     type: ClubType
     created: datetime
+    free_name_change: Optional[bool]
     can_delete_immediately: bool
-    suspension_required_after: datetime
+    suspension_required_after: Optional[datetime]
     genre: str
 
 
