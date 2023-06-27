@@ -257,13 +257,16 @@ class ClubProvider(BaseProvider):
             decorations = [
                 "detail",
                 "clubPresence",
-                f"roster(member moderator requestedToJoin banned recommended)",
-                "settings"
+                "roster(member moderator requestedToJoin banned recommended)",
+                "settings",
             ]
 
         return [
-            club for club in (
-                await self._send_clubhub_decoration_request(club_ids, decorations=decorations, **kwargs)
+            club
+            for club in (
+                await self._send_clubhub_decoration_request(
+                    club_ids, decorations=decorations, **kwargs
+                )
             ).clubs
         ]
 

@@ -39,7 +39,6 @@ PEOPLE_TAGS: Final[frozenset] = frozenset(
     )
 )
 
-
 CLUB_TAGS: Final[frozenset] = frozenset.union(
     COMMUNICATION_TAGS, PLAY_STYLE_TAGS, PEOPLE_TAGS
 )
