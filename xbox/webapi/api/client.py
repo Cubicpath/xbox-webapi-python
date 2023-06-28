@@ -16,6 +16,7 @@ from xbox.webapi.api.provider.achievements import AchievementsProvider
 from xbox.webapi.api.provider.catalog import CatalogProvider
 from xbox.webapi.api.provider.clubs import ClubProvider
 from xbox.webapi.api.provider.cqs import CQSProvider
+from xbox.webapi.api.provider.feed import FeedProvider
 from xbox.webapi.api.provider.gameclips import GameclipProvider
 from xbox.webapi.api.provider.lists import ListsProvider
 from xbox.webapi.api.provider.mediahub import MediahubProvider
@@ -132,6 +133,7 @@ class XboxLiveClient:
         self.catalog = CatalogProvider(self)
         self.smartglass = SmartglassProvider(self)
         self.clubs = ClubProvider(self)
+        self.feed = FeedProvider(self)
 
     @property
     def xuid(self) -> str:

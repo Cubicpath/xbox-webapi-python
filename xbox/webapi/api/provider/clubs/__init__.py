@@ -2,8 +2,6 @@
 Clubs
 
 Manage clubs and club information.
-
-TODO: Club messaging/activity feed
 """
 from collections.abc import Sequence
 import json
@@ -39,16 +37,17 @@ class ClubProvider(BaseProvider):
     CLUBPRESENCE_URL = "https://clubpresence.xboxlive.com"
     CLUBPROFILE_URL = "https://clubprofile.xboxlive.com"
     CLUBROSTER_URL = "https://clubroster.xboxlive.com"
-    # CHATFD_URL = "https://chatfd.xboxlive.com"
     # CLUBSEARCH_URL = 'https://clubsearch.xboxlive.com'
 
-    HEADERS_CLUBACCOUNTS = {"x-xbl-contract-version": "1"}
-    HEADERS_OWNED_CLUBS = HEADERS_CLUBACCOUNTS | {"x-xbl-contract-version": "2"}
-    HEADERS_CLUBHUB = {"x-xbl-contract-version": "5", "Accept-Language": "en-US"}
-    HEADERS_CLUBPRESENCE = {"x-xbl-contract-version": "1"}
-    HEADERS_CLUBPROFILE = {"x-xbl-contract-version": "2"}
-    HEADERS_CLUBROSTER = {"x-xbl-contract-version": "4"}
-    # HEADERS_CHATFD = {"x-xbl-contract-version": "1"}
+    _HEADERS_COMMON = {
+        "Accept": "application/json",
+        "Accept-Language": "en-US, en, en-AU, en, en-GB, en, en-CA, en, en-AS, en, en-AT, en, en-BB, en",
+    }
+    HEADERS_CLUBACCOUNTS = _HEADERS_COMMON | {"x-xbl-contract-version": "1"}
+    HEADERS_CLUBHUB = _HEADERS_COMMON | {"x-xbl-contract-version": "5"}
+    HEADERS_CLUBPRESENCE = _HEADERS_COMMON | {"x-xbl-contract-version": "1"}
+    HEADERS_CLUBPROFILE = _HEADERS_COMMON | {"x-xbl-contract-version": "2"}
+    HEADERS_CLUBROSTER = _HEADERS_COMMON | {"x-xbl-contract-version": "4"}
     # HEADERS_CLUBSEARCH = {'x-xbl-contract-version': '2'}
 
     SEPARATOR = ","
@@ -79,12 +78,11 @@ class ClubProvider(BaseProvider):
 
     async def get_clubs_owned(self, **kwargs) -> OwnedClubsResponse:
         """Get list of clubs owned by the caller."""
+        headers = self.HEADERS_CLUBACCOUNTS | {"x-xbl-contract-version": "2"}
 
         url = self.CLUBACCOUNTS_URL + f"/users/xuid({self.client.xuid})/clubsowned"
 
-        resp = await self.client.session.get(
-            url, headers=self.HEADERS_OWNED_CLUBS, **kwargs
-        )
+        resp = await self.client.session.get(url, headers=headers, **kwargs)
         resp.raise_for_status()
 
         return OwnedClubsResponse.parse_raw(resp.text)
