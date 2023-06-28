@@ -13,8 +13,8 @@ from urllib.parse import quote
 from xbox.webapi.api.provider.baseprovider import BaseProvider
 from xbox.webapi.api.provider.feed.models import (
     ActivityItemType,
+    ActivityResponse,
     ContentType,
-    FeedResponse,
     Message,
     MessageResponse,
     MessagesResponse,
@@ -72,7 +72,7 @@ class FeedProvider(BaseProvider):
         exclude_types: Optional[List[ActivityItemType]] = None,
         start_date_time: Optional[datetime] = None,
         **kwargs,
-    ) -> FeedResponse:
+    ) -> ActivityResponse:
         if exclude_types is None:
             exclude_types = [
                 ActivityItemType.FOLLOWED,
@@ -101,7 +101,7 @@ class FeedProvider(BaseProvider):
 
         print(resp.text)
 
-        return FeedResponse.parse_raw(resp.text)
+        return ActivityResponse.parse_raw(resp.text)
 
     # CHAT FEED
     # ---------------------------------------------------------------------------

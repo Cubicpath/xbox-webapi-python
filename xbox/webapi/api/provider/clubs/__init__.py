@@ -195,7 +195,7 @@ class ClubProvider(BaseProvider):
 
     async def delete_club(
         self, club_id: str, actor: Optional[str] = None, **kwargs
-    ) -> bool:
+    ) -> ClubReservation:
         """Delete the club with the given id.
 
         Codes
@@ -211,7 +211,7 @@ class ClubProvider(BaseProvider):
         )
         resp.raise_for_status()
 
-        return resp.status == 204
+        return ClubReservation.parse_raw(resp.text)
 
     # CLUB HUB
     # ---------------------------------------------------------------------------

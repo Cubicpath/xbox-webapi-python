@@ -19,8 +19,9 @@ class ActivityItemType(str, Enum):
     TEXT_POST = "TextPost"
     USER_POST = "UserPost"
     ACHIEVEMENT = "Achievement"
+    ACHIEVEMENT_LEGACY = "LegacyAchievement"
     SCREENSHOT = "Screenshot"
-    CLIP = "GameDVR"
+    GAME_DVR = "GameDVR"
     BROADCAST_START = "BroadcastStart"
     BROADCAST_END = "BroadcastEnd"
     GAMERTAG_CHANGED = "GamertagChanged"
@@ -222,7 +223,7 @@ class UserPostActivityItem(ActivityItem):
     timeline: ClubTimeline
 
 
-class FeedResponse(CamelCaseModel):
+class ActivityResponse(CamelCaseModel):
     num_items: int
     activity_items: List[
         Union[
