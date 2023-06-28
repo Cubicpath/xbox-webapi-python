@@ -295,16 +295,18 @@ class FeedProvider(BaseProvider):
         url = self.COMMENTS_URL + f"/summaries/batch"
 
         resp = await self.client.session.post(
-            url, headers=self.COMMENTS_URL, json=data, **kwargs
+            url, headers=self.HEADERS_COMMENTS, json=data, **kwargs
         )
         resp.raise_for_status()
 
         return SummariesResponse.parse_raw(resp.text).summaries
 
     async def get_post_comments(self, post_path: str, **kwargs) -> PathCommentsResponse:
-        url = self.COMMENTS_URL + f"/{post_path}"
+        url = self.COMMENTS_URL + f"/{post_path}/comments"
 
-        resp = await self.client.session.get(url, headers=self.COMMENTS_URL, **kwargs)
+        resp = await self.client.session.get(
+            url, headers=self.HEADERS_COMMENTS, **kwargs
+        )
         resp.raise_for_status()
 
         return PathCommentsResponse.parse_raw(resp.text)
