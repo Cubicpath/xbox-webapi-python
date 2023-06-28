@@ -103,7 +103,7 @@ class FeedProvider(BaseProvider):
 
     async def get_user_activity_history(
         self,
-        xuid: Optional[str],
+        xuid: Optional[str] = None,
         **activity_params,
     ) -> ActivityResponse:
         if activity_params.get("num_items") is None:
@@ -211,6 +211,16 @@ class FeedProvider(BaseProvider):
         data = {"locator": feed_item_id}
 
         url = self.ACTIVITY_URL + f"/timelines/User/{self.client.xuid}/pins"
+
+        resp = await self.client.session.post(
+            url, headers=self.HEADERS_ACTIVITY, json=data, **kwargs
+        )
+        resp.raise_for_status()
+
+    async def unpin_post(self, feed_item_id: str, **kwargs) -> None:
+        data = {"locator": feed_item_id}
+
+        url = self.ACTIVITY_URL + f"/timelines/User/{self.client.xuid}/unpin"
 
         resp = await self.client.session.post(
             url, headers=self.HEADERS_ACTIVITY, json=data, **kwargs
