@@ -198,9 +198,7 @@ class FeedProvider(BaseProvider):
     async def get_user_pins(
         self, xuid: Optional[str] = None, **kwargs
     ) -> ActivityResponse:
-        xuid = xuid or self.client.xuid
-
-        url = self.ACTIVITY_URL + f"/timelines/User/{xuid}/pins"
+        url = self.ACTIVITY_URL + f"/timelines/User/{xuid or self.client.xuid}/pins"
 
         resp = await self.client.session.get(
             url, headers=self.HEADERS_ACTIVITY, **kwargs
@@ -208,6 +206,16 @@ class FeedProvider(BaseProvider):
         resp.raise_for_status()
 
         return ActivityResponse.parse_raw(resp.text)
+
+    async def pin_post(self, feed_item_id: str, **kwargs) -> None:
+        data = {"locator": feed_item_id}
+
+        url = self.ACTIVITY_URL + f"/timelines/User/{self.client.xuid}/pins"
+
+        resp = await self.client.session.post(
+            url, headers=self.HEADERS_ACTIVITY, json=data, **kwargs
+        )
+        resp.raise_for_status()
 
     # USER POSTS
     # ---------------------------------------------------------------------------
