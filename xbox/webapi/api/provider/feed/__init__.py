@@ -18,6 +18,7 @@ from xbox.webapi.api.provider.feed.models import (
     Message,
     MessageResponse,
     MessagesResponse,
+    PathCommentsResponse,
     PathSummary,
     PostResponse,
     PostType,
@@ -299,6 +300,14 @@ class FeedProvider(BaseProvider):
         resp.raise_for_status()
 
         return SummariesResponse.parse_raw(resp.text).summaries
+
+    async def get_post_comments(self, post_path: str, **kwargs) -> PathCommentsResponse:
+        url = self.COMMENTS_URL + f"/{post_path}"
+
+        resp = await self.client.session.get(url, headers=self.COMMENTS_URL, **kwargs)
+        resp.raise_for_status()
+
+        return PathCommentsResponse.parse_raw(resp.text)
 
     # CHAT FEED
     # ---------------------------------------------------------------------------

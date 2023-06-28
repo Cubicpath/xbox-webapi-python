@@ -208,6 +208,18 @@ class PathSummary(CamelCaseModel):
     share_count: int
 
 
+class Comment(CamelCaseModel):
+    text: str
+    root_type: str
+    root_path: str
+    path: str
+    xuid: str
+    gamertag: str
+    date: datetime
+    id: str
+    parent_path: str
+
+
 class GameMediaContentLocator(CamelCaseModel):
     expiration: Optional[datetime]
     file_size: Optional[int]
@@ -351,3 +363,13 @@ class PostResponse(CamelCaseModel):
 
 class SummariesResponse(CamelCaseModel):
     summaries: List[PathSummary]
+
+
+class PathCommentsResponse(CamelCaseModel):
+    comments: List[Comment]
+    continuation_token: Optional[str]
+    type: str
+    path: str
+    like_count: int
+    comment_count: int
+    share_count: int
