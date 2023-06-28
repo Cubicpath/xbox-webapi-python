@@ -18,17 +18,26 @@ from xbox.webapi.api.provider.feed.models import (
     Message,
     MessageResponse,
     MessagesResponse,
+    PathSummary,
+    PostResponse,
+    PostType,
     ReportedItem,
     ReportedItemsResponse,
+    SummariesResponse,
+    TimelineType,
 )
 
 
 class FeedProvider(BaseProvider):
     ACTIVITY_URL = "https://avty.xboxlive.com"
+    USERPOSTS_URL = "https://userposts.xboxlive.com"
+    COMMENTS_URL = "https://comments.xboxlive.com"
     CHATFEED_URL = "https://chatfd.xboxlive.com"
     CLUBMODERATION_URL = "https://clubmoderation.xboxlive.com"
 
     HEADERS_ACTIVITY = {"x-xbl-contract-version": "12"}
+    HEADERS_USERPOSTS = {"x-xbl-contract-version": "2"}
+    HEADERS_COMMENTS = {"x-xbl-contract-version": "3"}
     HEADERS_CHATFEED = {"x-xbl-contract-version": "1"}
     HEADERS_CLUBMODERATION = {"x-xbl-contract-version": "1"}
 
@@ -199,6 +208,79 @@ class FeedProvider(BaseProvider):
         resp.raise_for_status()
 
         return ActivityResponse.parse_raw(resp.text)
+
+    # USER POSTS
+    # ---------------------------------------------------------------------------
+
+    async def post_text(self, text: str, **kwargs) -> PostResponse:
+        data = {
+            "postType": PostType.TEXT,
+            "postText": text,
+            "timelines": [
+                {
+                    "timelineType": TimelineType.USER,
+                    "timelineOwner": self.client.xuid,
+                }
+            ],
+        }
+
+        url = self.USERPOSTS_URL + f"/users/me/posts"
+
+        resp = await self.client.session.post(
+            url, headers=self.HEADERS_USERPOSTS, json=data, **kwargs
+        )
+        resp.raise_for_status()
+
+        return PostResponse.parse_raw(resp.text)
+
+    async def share_item(
+        self,
+        feed_item_id: str,
+        text: Optional[str] = None,
+        parent_id: Optional[str] = None,
+        **kwargs,
+    ) -> PostResponse:
+        post_type_data = {"locator": feed_item_id}
+        if parent_id:
+            post_type_data["parentId"] = parent_id
+
+        data = {
+            "postType": PostType.LINK_XBOX,
+            "postText": text or "",
+            "postTypeData": post_type_data,
+            "timelines": [
+                {
+                    "timelineType": TimelineType.USER,
+                    "timelineOwner": self.client.xuid,
+                }
+            ],
+        }
+
+        url = self.USERPOSTS_URL + f"/users/me/posts"
+
+        resp = await self.client.session.post(
+            url, headers=self.HEADERS_USERPOSTS, json=data, **kwargs
+        )
+        resp.raise_for_status()
+
+        return PostResponse.parse_raw(resp.text)
+
+    # COMMENTS
+    # ---------------------------------------------------------------------------
+
+    async def get_post_summaries(
+        self, post_paths: List[str], **kwargs
+    ) -> List[PathSummary]:
+        data = {"rootPaths": post_paths}
+
+        url = self.COMMENTS_URL + f"/summaries/batch"
+
+        resp = await self.client.session.post(
+            url, headers=self.COMMENTS_URL, json=data, **kwargs
+        )
+        resp.raise_for_status()
+
+        return SummariesResponse.parse_raw(resp.text).summaries
 
     # CHAT FEED
     # ---------------------------------------------------------------------------

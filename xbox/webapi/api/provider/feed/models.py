@@ -64,6 +64,7 @@ class MessageType(str, Enum):
 
 class PostType(str, Enum):
     UNKNOWN = "Unknown"
+    TEXT = "Text"
     LINK = "Link"
     LINK_XBOX = "XboxLink"
 
@@ -92,12 +93,12 @@ class ItemSource(str, Enum):
 
 class Platform(str, Enum):
     UNKNOWN = "Unknown"
-    XBOX_360 = "Xenon"
+    XBOX_360 = "Xenon"  # Not observed
     XBOX_ONE_OG = "Durango"
     XBOX_ONE = "XboxOne"
     XBOX_ONE_S = "Edmonton"
     XBOX_ONE_X = "Scorpio"
-    XBOX_SERIES_S = "Lockhart"
+    XBOX_SERIES_S = "Lockhart"  # Not observed
     XBOX_SERIES_X = "Scarlett"
     WINDOWS = "Win32"
     WINDOWS_ONE_CORE = "WindowsOneCore"
@@ -172,6 +173,13 @@ class Message(CamelCaseModel):
     flags: int
 
 
+class PostTimeline(CamelCaseModel):
+    timeline_type: TimelineType
+    timeline_owner: str
+    date: Optional[datetime]
+    timeline_uri: str
+
+
 class Timeline(CamelCaseModel):
     timeline_id: str
     timeline_type: TimelineType
@@ -190,6 +198,14 @@ class UserTimeline(Timeline):
     timeline_owner: str
     date: datetime
     timeline_uri: str
+
+
+class PathSummary(CamelCaseModel):
+    type: str
+    path: str
+    like_count: int
+    comment_count: int
+    share_count: int
 
 
 class GameMediaContentLocator(CamelCaseModel):
@@ -320,3 +336,18 @@ class MessagesResponse(CamelCaseModel):
 
 class ReportedItemsResponse(CamelCaseModel):
     reportedItems: List[ReportedItem]
+
+
+class PostResponse(CamelCaseModel):
+    post_uri: str
+    post_type: PostType
+    post_author: str
+    post_id: UUID
+    post_text: str
+    timelines: List[PostTimeline]
+    post_date: datetime
+    post_content_locators: Optional[List[GameMediaContentLocator]]
+
+
+class SummariesResponse(CamelCaseModel):
+    summaries: List[PathSummary]
