@@ -89,11 +89,12 @@ class ClubProvider(BaseProvider):
 
         return OwnedClubsResponse.parse_raw(resp.text)
 
-    async def claim_club(self, name: str, **kwargs) -> ClubReservation:
+    async def claim_club_name(self, name: str, **kwargs) -> ClubReservation:
         """Reserve a club name for use in create_club().
 
         Codes
             - 200: Successfully claimed club.
+            - 1000: A parallel write operation took precedence over your request.
             - 1007: The requested club name contains invalid characters.
                     Club names must only use letter, numbers, and spaces.
             - 1010: The requested club name is not available.
@@ -119,7 +120,7 @@ class ClubProvider(BaseProvider):
     ) -> ClubSummary:
         """Create a club with the given name and visibility.
 
-        If creating a public club, you must first call claim_club() with the name you want to use.
+        If creating a public club, you must first call claim_club_name() with the name you want to use.
 
         Codes
             - 201: Successfully created club.
@@ -127,8 +128,8 @@ class ClubProvider(BaseProvider):
             - 1007: The requested club name contains invalid characters.
                     Club names must only use letter, numbers, and spaces.
             - 1014: The club name has not been reserved by the calling user.
-                    This happens when club_type is PUBLIC and you have not
-                    called claim_club().
+                    This happens when club_type is not HIDDEN and you have not
+                    called claim_club_name().
             - 1023: The requested club name was rejected.
             - 1038: A TitleFamilyId value must be specified when requesting a TitleClub
                     (genre is "title" but title_family_id is not provided).
@@ -178,8 +179,8 @@ class ClubProvider(BaseProvider):
             - 1007: The requested club name contains invalid characters.
                     Club names must only use letter, numbers, and spaces.
             - 1014: The club name has not been reserved by the calling user.
-                    This happens when club_type is PUBLIC and you have not
-                    called claim_club().
+                    This happens when club_type is not HIDDEN and you have not
+                    called claim_club_name().
             - 1023: The requested club name was rejected.
             - 1035: The name cannot be changed for the requested club. All available name changes have been used.
         """
