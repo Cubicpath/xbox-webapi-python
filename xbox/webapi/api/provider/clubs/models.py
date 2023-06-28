@@ -53,6 +53,11 @@ class ClubJoinability(str, Enum):
     INVITE_ONLY = "InviteOnly"
 
 
+class ClubState(str, Enum):
+    NONE = "None"
+    SUSPENDED = "Suspended"
+
+
 class PreferredColor(CamelCaseModel):
     primary_color: Optional[str]
     secondary_color: Optional[str]
@@ -309,7 +314,7 @@ class Club(CamelCaseModel):
     target_roles: Optional[TargetRoleRecords]
     recommendation: Optional[ClubRecommendation]
     club_presence: Optional[List[ClubUserPresenceRecord]]
-    state: str
+    state: ClubState
     suspended_until_utc: Optional[
         datetime
     ]  # When the club remains suspended until. Null if not suspended
