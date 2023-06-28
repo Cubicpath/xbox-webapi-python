@@ -74,6 +74,13 @@ class LinkType(str, Enum):
     DEFAULT = "Default"
 
 
+class PathType(str, Enum):
+    UNKNOWN = "Unknown"
+    ACHIEVEMENT = "Achievement"
+    ACTIVITY_FEED_ITEM = "ActivityFeedItem"
+    USER_POST_TIMELINE = "UserPostTimeline"
+
+
 class TimelineType(str, Enum):
     UNKNOWN = "Unknown"
     USER = "User"
@@ -201,7 +208,7 @@ class UserTimeline(Timeline):
 
 
 class PathSummary(CamelCaseModel):
-    type: str
+    type: PathType
     path: str
     like_count: int
     comment_count: int
@@ -210,7 +217,7 @@ class PathSummary(CamelCaseModel):
 
 class Comment(CamelCaseModel):
     text: str
-    root_type: str
+    root_type: PathType
     root_path: str
     path: str
     xuid: str
@@ -268,7 +275,7 @@ class ActivityItem(BaseActivityItem):
 class AchievementActivityItem(ActivityItem):
     achievement_scid: UUID
     achievement_id: str
-    achievement_type: str
+    achievement_type: AchievementType
     achievement_icon: str
     achievement_name: str
     rarity_category: str
@@ -368,7 +375,7 @@ class SummariesResponse(CamelCaseModel):
 class PathCommentsResponse(CamelCaseModel):
     comments: List[Comment]
     continuation_token: Optional[str]
-    type: str
+    type: PathType
     path: str
     like_count: int
     comment_count: int
