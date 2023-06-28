@@ -148,6 +148,25 @@ class ClubProvider(BaseProvider):
 
         return ClubSummary.parse_raw(resp.text)
 
+    async def transfer_club_ownership(
+        self, club_id: str, xuid: str, **kwargs
+    ) -> ClubSummary:
+        """Transfer club ownership to the given xuid.
+
+        Codes
+            - 1015: The requested club is not available.
+        """
+        data = {"method": "TransferOwnership", "user": xuid}
+
+        url = self.CLUBACCOUNTS_URL + f"/clubs/clubid({club_id})"
+
+        resp = await self.client.session.post(
+            url, headers=self.HEADERS_CLUBACCOUNTS, json=data, **kwargs
+        )
+        resp.raise_for_status()
+
+        return ClubSummary.parse_raw(resp.text)
+
     async def rename_club(self, club_id: str, name: str, **kwargs) -> ClubSummary:
         """Rename a club with the given name.
 
