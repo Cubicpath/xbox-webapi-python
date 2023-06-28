@@ -280,7 +280,9 @@ class ClubProvider(BaseProvider):
         """Get clubs associated with the given xuid."""
         xuid = xuid or self.client.xuid
 
-        url = self._create_clubhub_id_endpoint(xuid, is_xuid=True)
+        url = self._create_clubhub_id_endpoint(
+            xuid, is_xuid=True, decorations=["detail"]
+        )
         resp = await self.client.session.get(
             url, headers=self.HEADERS_CLUBHUB, **kwargs
         )

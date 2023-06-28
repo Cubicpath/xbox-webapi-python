@@ -141,7 +141,8 @@ class ClubTypeContainer(CamelCaseModel):
 
 class ClubRoleRecord(CamelCaseModel):
     actor_xuid: str  # Actor Xuid that was responsible for user belonging to the role.
-    xuid: str  # Xuid that belongs to the role.
+    xuid: Optional[str]  # Xuid that belongs to the role. Empty if same as actor_xuid.
+    role: Optional[ClubRole]
     created_date: datetime  # When the user was added to the role.
     localized_role: Optional[ClubRole]  # Role of the user.
 
