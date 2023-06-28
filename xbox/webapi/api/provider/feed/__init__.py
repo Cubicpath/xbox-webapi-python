@@ -52,19 +52,23 @@ class FeedProvider(BaseProvider):
     ) -> ActivityResponse:
         params = {}
 
-        num_items = activity_params.pop("num_items")
+        num_items = activity_params.pop("num_items", None)
         if num_items is not None:
             params["numItems"] = str(num_items)
 
-        activity_types = activity_params.pop("activity_types")
+        include_self = activity_params.pop("include_self", None)
+        if include_self is not None:
+            params["includeSelf"] = str(num_items).lower()
+
+        activity_types = activity_params.pop("activity_types", None)
         if activity_types:
             params["activityTypes"] = ";".join(activity_types)
 
-        exclude_types = activity_params.pop("exclude_types")
+        exclude_types = activity_params.pop("exclude_types", None)
         if exclude_types:
             params["excludeTypes"] = ";".join(exclude_types)
 
-        start_date_time = activity_params.pop("start_date_time")
+        start_date_time = activity_params.pop("start_date_time", None)
         if start_date_time:
             params["startDateTime"] = quote(
                 start_date_time.strftime("%m/%d/%Y+%H:%M:%S"), safe=""
@@ -149,6 +153,44 @@ class FeedProvider(BaseProvider):
         url = self.ACTIVITY_URL + f"/titles/titleId({title_id})/activity/feed"
 
         return await self._send_activity_request(url, **activity_params)
+
+    async def get_xbox_activity_feed(
+        self,
+        **activity_params,
+    ) -> ActivityResponse:
+        if activity_params.get("num_items") is None:
+            activity_params["num_items"] = 50
+
+        if activity_params.get("include_self") is None:
+            activity_params["include_self"] = True
+
+        if (
+            activity_params.get("activity_types") is None
+            and activity_params.get("exclude_types") is None
+        ):
+            activity_params["exclude_types"] = [
+                ActivityItemType.PLAYED,
+                ActivityItemType.BROADCAST_START,
+                ActivityItemType.BROADCAST_END,
+            ]
+
+        url = self.ACTIVITY_URL + f"/users/xuid({self.client.xuid})/XboxFeed"
+
+        return await self._send_activity_request(url, **activity_params)
+
+    async def get_user_pins(
+        self, xuid: Optional[str] = None, **kwargs
+    ) -> ActivityResponse:
+        xuid = xuid or self.client.xuid
+
+        url = self.ACTIVITY_URL + f"/timelines/User/{xuid}/pins"
+
+        resp = await self.client.session.get(
+            url, headers=self.HEADERS_ACTIVITY, **kwargs
+        )
+        resp.raise_for_status()
+
+        return ActivityResponse.parse_raw(resp.text)
 
     # CHAT FEED
     # ---------------------------------------------------------------------------
