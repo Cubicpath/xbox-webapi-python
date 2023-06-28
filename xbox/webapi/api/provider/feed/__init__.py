@@ -47,94 +47,108 @@ class FeedProvider(BaseProvider):
             year=year, month=month, day=monthrange(year, month)[int(end_of_month)]
         )
 
+    async def _send_activity_request(
+        self, url: str, **activity_params
+    ) -> ActivityResponse:
+        params = {}
+
+        num_items = activity_params.pop("num_items")
+        if num_items is not None:
+            params["numItems"] = str(num_items)
+
+        activity_types = activity_params.pop("activity_types")
+        if activity_types:
+            params["activityTypes"] = ";".join(activity_types)
+
+        exclude_types = activity_params.pop("exclude_types")
+        if exclude_types:
+            params["excludeTypes"] = ";".join(exclude_types)
+
+        start_date_time = activity_params.pop("start_date_time")
+        if start_date_time:
+            params["startDateTime"] = quote(
+                start_date_time.strftime("%m/%d/%Y+%H:%M:%S"), safe=""
+            )
+
+        # All leftover "params" are assumed to be request kwargs
+        request_kwargs = activity_params
+
+        resp = await self.client.session.get(
+            url, headers=self.HEADERS_ACTIVITY, params=params, **request_kwargs
+        )
+        resp.raise_for_status()
+
+        return ActivityResponse.parse_raw(resp.text)
+
     async def get_user_activity_history(
         self,
         xuid: Optional[str],
-        num_items: int = 20,
-        activity_types: Optional[List[ActivityItemType]] = None,
-        **kwargs,
+        **activity_params,
     ) -> ActivityResponse:
-        if activity_types is None:
-            activity_types = [
+        if activity_params.get("num_items") is None:
+            activity_params["num_items"] = 20
+
+        if (
+            activity_params.get("activity_types") is None
+            and activity_params.get("exclude_types") is None
+        ):
+            activity_params["activity_types"] = [
                 ActivityItemType.GAME_DVR,
                 ActivityItemType.ACHIEVEMENT_LEGACY,
                 ActivityItemType.SCREENSHOT,
             ]
 
-        params = {"numItems": str(num_items), "activityTypes": ";".join(activity_types)}
-
-        url = self.ACTIVITY_URL + f"/users/xuid"
+        url = f"{self.ACTIVITY_URL}/users/xuid({xuid or self.client.xuid})/Activity/History"
         if xuid is None:
-            url += f"({self.client.xuid})/Activity/History/UnShared"
-        else:
-            url += f"({xuid})/Activity/History"
+            url += "/UnShared"
 
-        resp = await self.client.session.get(
-            url, headers=self.HEADERS_ACTIVITY, params=params, **kwargs
-        )
-        resp.raise_for_status()
-
-        return ActivityResponse.parse_raw(resp.text)
+        return await self._send_activity_request(url, **activity_params)
 
     async def get_club_activity_feed(
         self,
         club_id: str,
-        num_items: int = 50,
-        exclude_types: Optional[List[ActivityItemType]] = None,
-        **kwargs,
+        **activity_params,
     ) -> ActivityResponse:
-        if exclude_types is None:
-            exclude_types = [
+        if activity_params.get("num_items") is None:
+            activity_params["num_items"] = 50
+
+        if (
+            activity_params.get("activity_types") is None
+            and activity_params.get("exclude_types") is None
+        ):
+            activity_params["exclude_types"] = [
                 ActivityItemType.BROADCAST_START,
                 ActivityItemType.BROADCAST_END,
             ]
 
-        params = {"numItems": str(num_items), "excludeTypes": ";".join(exclude_types)}
-
         url = self.ACTIVITY_URL + f"/clubs/clubId({club_id})/activity/feed"
-        resp = await self.client.session.get(
-            url, headers=self.HEADERS_ACTIVITY, params=params, **kwargs
-        )
-        resp.raise_for_status()
 
-        return ActivityResponse.parse_raw(resp.text)
+        return await self._send_activity_request(url, **activity_params)
 
     async def get_title_activity_feed(
         self,
         title_id: str,
-        exclude_types: Optional[List[ActivityItemType]] = None,
-        start_date_time: Optional[datetime] = None,
-        **kwargs,
+        **activity_params,
     ) -> ActivityResponse:
-        if exclude_types is None:
-            exclude_types = [
+        if (
+            activity_params.get("activity_types") is None
+            and activity_params.get("exclude_types") is None
+        ):
+            activity_params["exclude_types"] = [
                 ActivityItemType.FOLLOWED,
                 ActivityItemType.GAMERTAG_CHANGED,
                 ActivityItemType.PLAYED,
             ]
 
         # Default start date is 2-3 months ago
-        if start_date_time is None:
-            start_date_time = self._feed_start_date_time(
+        if activity_params.get("start_date_time") is None:
+            activity_params["start_date_time"] = self._feed_start_date_time(
                 months_ago=3, end_of_month=True
             )
 
-        params = {
-            "excludeTypes": ";".join(exclude_types),
-            "startDateTime": quote(
-                start_date_time.strftime("%m/%d/%Y+%H:%M:%S"), safe=""
-            ),
-        }
-
         url = self.ACTIVITY_URL + f"/titles/titleId({title_id})/activity/feed"
-        resp = await self.client.session.get(
-            url, headers=self.HEADERS_ACTIVITY, params=params, **kwargs
-        )
-        resp.raise_for_status()
 
-        print(resp.text)
-
-        return ActivityResponse.parse_raw(resp.text)
+        return await self._send_activity_request(url, **activity_params)
 
     # CHAT FEED
     # ---------------------------------------------------------------------------
