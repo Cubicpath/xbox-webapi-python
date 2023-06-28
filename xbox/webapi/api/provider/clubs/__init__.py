@@ -309,13 +309,20 @@ class ClubProvider(BaseProvider):
         resp.raise_for_status()
         return [club for club in SearchClubsResponse.parse_raw(resp.text).clubs]
 
-    async def get_club_recommendations(self, **kwargs) -> List[Club]:
+    async def get_club_recommendations(
+        self, title_id: Optional[str] = None, **kwargs
+    ) -> List[Club]:
         """Get clubs recommendations for the caller."""
 
-        url = self.CLUBHUB_URL + f"/clubs/recommendations"
-        resp = await self.client.session.post(
-            url, headers=self.HEADERS_CLUBHUB, **kwargs
-        )
+        method = self.client.session.post
+        endpoint = "/clubs/recommendations"
+        if title_id:
+            method = self.client.session.get
+            endpoint += f"ByTitle({title_id})"
+        endpoint += "/decoration/detail"
+
+        url = self.CLUBHUB_URL + endpoint
+        resp = await method(url, headers=self.HEADERS_CLUBHUB, **kwargs)
         resp.raise_for_status()
 
         return [club for club in SearchClubsResponse.parse_raw(resp.text).clubs]
