@@ -80,6 +80,17 @@ class RarityCategory(str, Enum):
     RARE = "Rare"
 
 
+class Platform(str, Enum):
+    UNKNOWN = "Unknown"
+    XBOX_360 = "Xenon"
+    XBOX_ONE = "Durango"
+    XBOX_ONE_S = "Edmonton"
+    XBOX_ONE_X = "Scorpio"
+    XBOX_SERIES_S = "Lockhart"
+    XBOX_SERIES_X = "Scarlett"
+    WINDOWS = "Win32"
+
+
 class Report(CamelCaseModel):
     reporting_xuid: str
     text_reason: str
@@ -159,7 +170,7 @@ class ActivityItem(CamelCaseModel):
     content_image_uri: Optional[str]
     content_title: Optional[str]
     game_media_content_locators: Optional[List[GameMediaContentLocator]]
-    platform: Optional[str]  # Platform item was posted from
+    platform: Optional[Platform]  # System item was posted from
     title_id: Optional[str]
     upload_title_id: Optional[str]
     description: str
