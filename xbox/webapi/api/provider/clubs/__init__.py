@@ -381,9 +381,7 @@ class ClubProvider(BaseProvider):
             - 413: Description is too large (500 char max).
             - 1100: Insufficient permissions for write request.
         """
-        contract = ClubSettingsContract.parse_obj(
-            {"creationDateUtc": "0001-01-01T00:00:00.000Z"}
-        )
+        contract = ClubSettingsContract()
         modified_fields = []
         request_kwargs = {}
 

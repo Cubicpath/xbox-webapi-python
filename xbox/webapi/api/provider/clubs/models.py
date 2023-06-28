@@ -78,7 +78,9 @@ class DeepLinks(CamelCaseModel):
 
 class ClubSettingsContract(CamelCaseModel):
     description: Optional[str]
-    creation_date_utc: datetime
+    creation_date_utc: datetime = datetime.strptime(
+        "0001-01-01T00:00:00.000Z", "%Y-%m-%dT%H:%M:%S.%fZ"
+    )
     background_image_url: Optional[str]
     display_image_url: Optional[str]
     preferred_color: Optional[PreferredColor]
