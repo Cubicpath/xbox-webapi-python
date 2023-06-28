@@ -370,7 +370,7 @@ class ClubProvider(BaseProvider):
 
     # CLUB PROFILE
     # ---------------------------------------------------------------------------
-    async def update_club_profile(self, club_id: str, **kwargs) -> None:
+    async def update_club_profile(self, club_id: str, **setting_values) -> None:
         """Update club profile settings.
 
         Settings are passed in as kwarg pairs. Each setting name must be a valid ClubSettingsContract field.
@@ -384,13 +384,13 @@ class ClubProvider(BaseProvider):
             {"creationDateUtc": "0001-01-01T00:00:00.000Z"}
         )
         modified_fields = []
+        request_kwargs = {}
 
-        for key in kwargs.keys():
+        for key, value in setting_values.items():
             # Skip if not valid setting name.
-            if key not in ClubSettingsContract.__fields_set__:
+            if key not in ClubSettingsContract.__fields__:
+                request_kwargs[key] = value
                 continue
-
-            value = kwargs.pop(key)
 
             # Update contract fields with new values.
             # If a value is None, omit it in the contract.
@@ -407,7 +407,7 @@ class ClubProvider(BaseProvider):
 
         url = self.CLUBPROFILE_URL + f"/clubs/{club_id}/profile"
         resp = await self.client.session.post(
-            url, headers=self.HEADERS_CLUBPROFILE, json=data, **kwargs
+            url, headers=self.HEADERS_CLUBPROFILE, json=data, **request_kwargs
         )
         resp.raise_for_status()
 
