@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any, List, Optional, Union
 from uuid import UUID
 
-from xbox.webapi.api.provider.clubs import ClubRole
+from xbox.webapi.api.provider.clubs.models import ClubRole
 from xbox.webapi.common.models import CamelCaseModel
 
 
@@ -25,11 +25,13 @@ class ActivityItemType(str, Enum):
     BROADCAST_START = "BroadcastStart"
     BROADCAST_END = "BroadcastEnd"
     GAMERTAG_CHANGED = "GamertagChanged"
+    CONTAINER = "Container"
 
 
 class AuthorType(str, Enum):
     UNKNOWN = "Unknown"
     USER = "User"
+    TITLE = "TitleUser"
 
 
 class ContentType(str, Enum):
@@ -63,6 +65,7 @@ class MessageType(str, Enum):
 class PostType(str, Enum):
     UNKNOWN = "Unknown"
     LINK = "Link"
+    LINK_XBOX = "XboxLink"
 
 
 class LinkType(str, Enum):
@@ -72,23 +75,37 @@ class LinkType(str, Enum):
 
 class TimelineType(str, Enum):
     UNKNOWN = "Unknown"
+    USER = "User"
     CLUB = "Club"
 
 
 class RarityCategory(str, Enum):
     UNKNOWN = "Unknown"
+    COMMON = "Common"
     RARE = "Rare"
+
+
+class ItemSource(str, Enum):
+    UNKNOWN = "Unknown"
+    TRENDING = "Trending"
 
 
 class Platform(str, Enum):
     UNKNOWN = "Unknown"
     XBOX_360 = "Xenon"
-    XBOX_ONE = "Durango"
+    XBOX_ONE_OG = "Durango"
+    XBOX_ONE = "XboxOne"
     XBOX_ONE_S = "Edmonton"
     XBOX_ONE_X = "Scorpio"
     XBOX_SERIES_S = "Lockhart"
     XBOX_SERIES_X = "Scarlett"
     WINDOWS = "Win32"
+    WINDOWS_ONE_CORE = "WindowsOneCore"
+
+
+class Title(CamelCaseModel):
+    title_id: int
+    title_name: str
 
 
 class Report(CamelCaseModel):
@@ -120,9 +137,7 @@ class PreferredColor(CamelCaseModel):
     tertiary_color: Optional[str]
 
 
-class AuthorInfo(CamelCaseModel):
-    modern_gamertag: str
-    modern_gamertag_suffix: str
+class BaseAuthorInfo(CamelCaseModel):
     name: str
     second_name: str
     image_url: str
@@ -130,6 +145,18 @@ class AuthorInfo(CamelCaseModel):
     show_as_avatar: str
     author_type: AuthorType
     id: str
+
+
+class UserAuthorInfo(BaseAuthorInfo):
+    modern_gamertag: str
+    modern_gamertag_suffix: str
+
+
+class TitleAuthorInfo(BaseAuthorInfo):
+    title_id: str
+    title_name: str
+    title_image: str
+    unfollowable_titles: List[Title]
 
 
 class Message(CamelCaseModel):
@@ -153,9 +180,16 @@ class Timeline(CamelCaseModel):
 
 
 class ClubTimeline(Timeline):
-    is_official_club: bool
+    is_official_club: bool  # Only for official clubs
+    unfollowable_titles: Optional[List[Title]]  # Only for official clubs
     author_roles: List[ClubRole]
     is_public: bool
+
+
+class UserTimeline(Timeline):
+    timeline_owner: str
+    date: datetime
+    timeline_uri: str
 
 
 class GameMediaContentLocator(CamelCaseModel):
@@ -165,7 +199,16 @@ class GameMediaContentLocator(CamelCaseModel):
     uri: Optional[str]
 
 
-class ActivityItem(CamelCaseModel):
+class BaseActivityItem(CamelCaseModel):
+    description: str
+    has_ugc: bool
+    activity_item_type: ActivityItemType
+    short_description: str
+    item_text: str
+    has_liked: bool
+
+
+class ActivityItem(BaseActivityItem):
     bing_id: Optional[UUID]
     content_image_uri: Optional[str]
     content_title: Optional[str]
@@ -173,14 +216,9 @@ class ActivityItem(CamelCaseModel):
     platform: Optional[Platform]  # System item was posted from
     title_id: Optional[str]
     upload_title_id: Optional[str]
-    description: str
     date: datetime
-    has_ugc: bool
-    activity_item_type: ActivityItemType
     content_type: ContentType
-    short_description: str
     ugc_caption: Optional[str]
-    item_text: str
     item_image: Optional[str]
     trusted_item_image: Optional[bool]
     share_root: str
@@ -191,25 +229,27 @@ class ActivityItem(CamelCaseModel):
     num_comments: Optional[int]
     num_shares: Optional[int]
     num_views: Optional[int]
-    has_liked: bool
-    author_info: AuthorInfo
+    author_info: Union[UserAuthorInfo, TitleAuthorInfo]
     user_xuid: str
     pinned: Optional[bool]
 
+    class Config:
+        smart_union = True
+
 
 class AchievementActivityItem(ActivityItem):
-    achievement_description: str
-    achievement_icon: str
-    achievement_id: str
-    achievement_name: str
     achievement_scid: UUID
+    achievement_id: str
     achievement_type: str
+    achievement_icon: str
+    achievement_name: str
+    rarity_category: str
+    rarity_percentage: int
     gamerscore: int
+    achievement_description: str
+    is_secret: bool
     has_app_award: bool
     has_art_award: bool
-    is_secret: bool
-    rarity_category: str
-    rarity_percentage: str
 
 
 class ClipActivityItem(ActivityItem):
@@ -236,9 +276,9 @@ class UserPostActivityItem(ActivityItem):
     timeline: ClubTimeline
 
 
-class ActivityResponse(CamelCaseModel):
-    num_items: int
-    activity_items: List[
+class ContainerActivityItem(BaseActivityItem):
+    item_source: ItemSource
+    feed_items: List[
         Union[
             AchievementActivityItem,
             ScreenshotActivityItem,
@@ -247,9 +287,24 @@ class ActivityResponse(CamelCaseModel):
             ActivityItem,
         ]
     ]
-    cont_token: str
+
+
+class ActivityResponse(CamelCaseModel):
+    num_items: int
+    activity_items: List[
+        Union[
+            AchievementActivityItem,
+            ScreenshotActivityItem,
+            ClipActivityItem,
+            UserPostActivityItem,
+            ContainerActivityItem,
+            ActivityItem,
+        ]
+    ]
+    cont_token: Optional[str]
+    max_pins: Optional[int]
     polling_interval_seconds: Optional[str]
-    polling_token: str
+    polling_token: Optional[str]
 
     class Config:
         smart_union = True
