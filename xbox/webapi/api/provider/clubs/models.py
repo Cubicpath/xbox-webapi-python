@@ -153,14 +153,16 @@ class ClubRoleRecord(CamelCaseModel):
 
 
 class ClubRoster(CamelCaseModel):
-    moderator: List[ClubRoleRecord]  # Club moderators
+    moderator: Optional[
+        List[ClubRoleRecord]
+    ]  # Club moderators, only empty if club is suspended.
     requested_to_join: Optional[
         List[ClubRoleRecord]
-    ]  # Users who've requested to join the club
+    ]  # Users who've requested to join the club.
     recommended: Optional[
         List[ClubRoleRecord]
-    ]  # Users who've been recommended for the club
-    banned: Optional[List[ClubRoleRecord]]  # Users who've been banned from the club
+    ]  # Users who've been recommended for the club.
+    banned: Optional[List[ClubRoleRecord]]  # Users who've been banned from the club.
 
 
 class TargetRoleRecords(CamelCaseModel):
