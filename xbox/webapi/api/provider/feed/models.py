@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Generic, List, Optional, TypeVar, Union
+from typing import Any, List, Optional, Union
 from uuid import UUID
 
 from xbox.webapi.api.provider.clubs import ClubRole
@@ -110,14 +110,15 @@ class PreferredColor(CamelCaseModel):
 
 
 class AuthorInfo(CamelCaseModel):
-    author_type: AuthorType
-    color: PreferredColor
-    image_url: str
     modern_gamertag: str
     modern_gamertag_suffix: str
     name: str
     second_name: str
+    image_url: str
+    color: PreferredColor
     show_as_avatar: str
+    author_type: AuthorType
+    id: str
 
 
 class Message(CamelCaseModel):
@@ -169,7 +170,7 @@ class ActivityItem(CamelCaseModel):
     short_description: str
     ugc_caption: Optional[str]
     item_text: str
-    item_image: str
+    item_image: Optional[str]
     trusted_item_image: Optional[bool]
     share_root: str
     feed_item_id: str
@@ -182,6 +183,7 @@ class ActivityItem(CamelCaseModel):
     has_liked: bool
     author_info: AuthorInfo
     user_xuid: str
+    pinned: Optional[bool]
 
 
 class AchievementActivityItem(ActivityItem):
@@ -231,6 +233,7 @@ class ActivityResponse(CamelCaseModel):
             ScreenshotActivityItem,
             ClipActivityItem,
             UserPostActivityItem,
+            ActivityItem,
         ]
     ]
     cont_token: str

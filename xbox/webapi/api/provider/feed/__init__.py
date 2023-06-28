@@ -47,17 +47,49 @@ class FeedProvider(BaseProvider):
             year=year, month=month, day=monthrange(year, month)[int(end_of_month)]
         )
 
+    async def get_user_activity_history(
+        self,
+        xuid: Optional[str],
+        num_items: int = 20,
+        activity_types: Optional[List[ActivityItemType]] = None,
+        **kwargs,
+    ) -> ActivityResponse:
+        if activity_types is None:
+            activity_types = [
+                ActivityItemType.GAME_DVR,
+                ActivityItemType.ACHIEVEMENT_LEGACY,
+                ActivityItemType.SCREENSHOT,
+            ]
+
+        params = {"numItems": str(num_items), "activityTypes": ";".join(activity_types)}
+
+        url = self.ACTIVITY_URL + f"/users/xuid"
+        if xuid is None:
+            url += f"({self.client.xuid})/Activity/History/UnShared"
+        else:
+            url += f"({xuid})/Activity/History"
+
+        resp = await self.client.session.get(
+            url, headers=self.HEADERS_ACTIVITY, params=params, **kwargs
+        )
+        resp.raise_for_status()
+
+        return ActivityResponse.parse_raw(resp.text)
+
     async def get_club_activity_feed(
         self,
         club_id: str,
-        max_items: int = 50,
+        num_items: int = 50,
         exclude_types: Optional[List[ActivityItemType]] = None,
         **kwargs,
-    ) -> None:
-        params = {
-            "excludeTypes": ";".join(exclude_types),
-            # "startDateTime": start_date_time.strftime("%m/%d/%Y+%H:%M:%S"),
-        }
+    ) -> ActivityResponse:
+        if exclude_types is None:
+            exclude_types = [
+                ActivityItemType.BROADCAST_START,
+                ActivityItemType.BROADCAST_END,
+            ]
+
+        params = {"numItems": str(num_items), "excludeTypes": ";".join(exclude_types)}
 
         url = self.ACTIVITY_URL + f"/clubs/clubId({club_id})/activity/feed"
         resp = await self.client.session.get(
@@ -65,10 +97,11 @@ class FeedProvider(BaseProvider):
         )
         resp.raise_for_status()
 
+        return ActivityResponse.parse_raw(resp.text)
+
     async def get_title_activity_feed(
         self,
         title_id: str,
-        max_items: int = 50,
         exclude_types: Optional[List[ActivityItemType]] = None,
         start_date_time: Optional[datetime] = None,
         **kwargs,
