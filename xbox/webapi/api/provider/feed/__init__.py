@@ -32,6 +32,14 @@ class FeedProvider(BaseProvider):
     HEADERS_CHATFEED = {"x-xbl-contract-version": "1"}
     HEADERS_CLUBMODERATION = {"x-xbl-contract-version": "1"}
 
+    async def delete_feed_item(self, feed_item_id: str, **kwargs) -> None:
+        headers = {"x-xbl-contract-version": "2"}
+
+        url = f"https://{feed_item_id}"
+
+        resp = await self.client.session.delete(url, headers=headers, **kwargs)
+        resp.raise_for_status()
+
     # ACTIVITY
     # ---------------------------------------------------------------------------
 
