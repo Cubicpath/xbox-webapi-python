@@ -195,12 +195,18 @@ class ClubProvider(BaseProvider):
 
     async def delete_club(
         self, club_id: str, actor: Optional[str] = None, **kwargs
-    ) -> ClubReservation:
+    ) -> Optional[ClubReservation]:
         """Delete the club with the given id.
+
+        If a club is not hidden and is older than one week you will receive a ClubReservation for the club name,
+        and it will be suspended for 7 days before being automatically deleted.
+
+        The ClubReservation should last for an hour after the club is deleted.
 
         Codes
             - 204: Successfully deleted club.
             - 409: Another pending operation in progress.
+            - 1021: The actor specified for the suspension record is not valid.
         """
         url = self.CLUBACCOUNTS_URL + f"/clubs/clubid({club_id})"
         if actor:
@@ -211,7 +217,8 @@ class ClubProvider(BaseProvider):
         )
         resp.raise_for_status()
 
-        return ClubReservation.parse_raw(resp.text)
+        if resp.text:
+            return ClubReservation.parse_raw(resp.text)
 
     # CLUB HUB
     # ---------------------------------------------------------------------------
