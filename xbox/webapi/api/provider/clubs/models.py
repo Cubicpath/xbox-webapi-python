@@ -9,25 +9,24 @@ from xbox.webapi.common.models import CamelCaseModel
 class ClubType(str, Enum):
     # From xbox::services::clubs::clubs_service_impl::convert_club_type_to_string
     # In Microsoft.Xbox.Services.dll
-    UNKNOWN = "unknown"  # Unknown club type
-    PUBLIC = "open"  # Open club
-    PRIVATE = "closed"  # Closed club
-    HIDDEN = "secret"  # Secret club
+    UNKNOWN = "unknown"
+    PUBLIC = "open"  # Anyone can Find, Ask to Join, and Play.
+    PRIVATE = "closed"  # Anyone can Find and Ask to Join.
+    HIDDEN = "secret"  # Only invited people can Ask to Join.
 
 
 class ClubRole(str, Enum):
     # From xbox::services::clubs::clubs_service_impl::convert_club_role_to_string
     # In Microsoft.Xbox.Services.dll
-    NONMEMBER = "Nonmember"  # Not a member of the club. Used exclusively for permissions/settings
-    MEMBER = "Member"  # Member of a club
-    MODERATOR = "Moderator"  # Moderator of a club
-    OWNER = "Owner"  # Owner of a club
-    REQUESTED_TO_JOIN = "RequestedToJoin"  # User has requested to join a club
-    RECOMMENDED = "Recommended"  # User has been recommended for a club
-    INVITED = "Invited"  # User has been invited to a club
-    BANNED = "Banned"  # User has been banned from all interaction with a club.
-    # A user cannot have any other role with a club if they are banned from it
-    FOLLOWER = "Follower"  # Follower of a club
+    NONMEMBER = "Nonmember"  # Used exclusively for permissions/settings
+    MEMBER = "Member"
+    MODERATOR = "Moderator"
+    OWNER = "Owner"
+    REQUESTED_TO_JOIN = "RequestedToJoin"
+    RECOMMENDED = "Recommended"
+    INVITED = "Invited"
+    BANNED = "Banned"  # A user cannot have any other role with a club if they are banned from it
+    FOLLOWER = "Follower"
 
 
 class ClubPresence(str, Enum):
@@ -35,16 +34,14 @@ class ClubPresence(str, Enum):
     # In Microsoft.Xbox.Services.dll
     NOT_IN_CLUB = "NotInClub"  # User is no longer on a club page.
     IN_CLUB = "InClub"  # User is viewing the club, but not on any specific page.
-    CHAT = "Chat"  # User is on the chat page.
-    FEED = "Feed"  # User is viewing the club feed.
-    ROSTER = "Roster"  # User is viewing the club roster/presence.
-    PLAY = (
-        "Play"  # User is on the play tab in the club (not actually playing anything).
-    )
+    CHAT = "Chat"
+    FEED = "Feed"
+    ROSTER = "Roster"
+    PLAY = "Play"  # User is on the play tab in the club (not actually playing).
     IN_GAME = "InGame"  # User is playing the associated game.
 
     # Extra value in modern club implementation
-    IN_PARTY = "InParty"  # UNDOCUMENTED -- UNCONFIRMED ENUM VALUE
+    IN_PARTY = "InParty"
 
 
 class ClubJoinability(str, Enum):
@@ -141,30 +138,24 @@ class ClubsSuggestResultWithText(CamelCaseModel):
 
 class ClubTypeContainer(CamelCaseModel):
     type: ClubType
-    genre: str
+    genre: str  # social
     localized_title_family_name: Optional[str]
     title_family_id: UUID
 
 
 class ClubRoleRecord(CamelCaseModel):
     actor_xuid: str  # Actor Xuid that was responsible for user belonging to the role.
-    xuid: Optional[str]  # Xuid that belongs to the role. Empty if same as actor_xuid.
+    xuid: Optional[str]  # Null if same as actor_xuid.
     role: Optional[ClubRole]
     created_date: datetime  # When the user was added to the role.
-    localized_role: Optional[ClubRole]  # Role of the user.
+    localized_role: Optional[ClubRole]
 
 
 class ClubRoster(CamelCaseModel):
-    moderator: Optional[
-        List[ClubRoleRecord]
-    ]  # Club moderators, only empty if club is suspended.
-    requested_to_join: Optional[
-        List[ClubRoleRecord]
-    ]  # Users who've requested to join the club.
-    recommended: Optional[
-        List[ClubRoleRecord]
-    ]  # Users who've been recommended for the club.
-    banned: Optional[List[ClubRoleRecord]]  # Users who've been banned from the club.
+    moderator: Optional[List[ClubRoleRecord]]  # Includes Owner, null if suspended.
+    requested_to_join: Optional[List[ClubRoleRecord]]
+    recommended: Optional[List[ClubRoleRecord]]
+    banned: Optional[List[ClubRoleRecord]]
 
 
 class TargetRoleRecords(CamelCaseModel):
@@ -173,7 +164,7 @@ class TargetRoleRecords(CamelCaseModel):
 
 
 class ClubRecommendationReason(CamelCaseModel):
-    localized_text: str  # Localized string giving the reason the club is recommended
+    localized_text: str
 
 
 class ClubRecommendation(CamelCaseModel):
@@ -201,9 +192,9 @@ class ClubSummary(CamelCaseModel):
 
 
 class ClubUserPresenceRecord(CamelCaseModel):
-    xuid: str  # Xuid of the user who was present at the club.
-    last_seen_timestamp: datetime  # Time when the user was last present within the club.
-    last_seen_state: ClubPresence  # User's state when they were last seen.
+    xuid: str
+    last_seen_timestamp: datetime
+    last_seen_state: ClubPresence
 
 
 _VT = TypeVar("_VT")  # Setting Value Generic
@@ -272,62 +263,53 @@ class ClubRootSettings(CamelCaseModel):
 
 
 class ClubProfile(CamelCaseModel):
-    description: Setting[Optional[str]]  # Description of the club
-    rules: Setting[Any]
-    name: Setting[str]  # Name of the club
-    short_name: Setting[str]  # Club short name
-    is_searchable: Setting[bool]  # Should the club show up in search results
-    is_recommendable: Setting[bool]  # Should the club show up in recommendations
-    leave_enabled: Setting[bool]  # Can users leave the club
-    transfer_ownership_enabled: Setting[
-        bool
-    ]  # Can ownership of the club be transferred
-    mature_content_enabled: Setting[bool]  # Is mature content enabled within the club
-    watch_club_titles_only: Setting[bool]
-    display_image_url: Setting[str]  # URL for display image
-    background_image_url: Setting[str]  # URL for background image
-    preferred_locale: Setting[str]  # The club's preferred locale
-    tags: Setting[
-        List[str]
-    ]  # Tags associated with the club (ex. "Hate-Free", "Women only")
-    associated_titles: Setting[List[str]]  # List of titles associated with the club
-    primary_color: Setting[str]  # Primary color of the club
-    secondary_color: Setting[str]  # Secondary color of the club
-    tertiary_color: Setting[str]  # Tertiary color of the club
+    description: Setting[Optional[str]]
+    rules: Setting[Any]  # Unknown.
+    name: Setting[str]
+    short_name: Setting[str]
+    is_searchable: Setting[bool]  # Should the club show up in search results.
+    is_recommendable: Setting[bool]  # Should the club show up in recommendations.
+    leave_enabled: Setting[bool]
+    transfer_ownership_enabled: Setting[bool]
+    mature_content_enabled: Setting[bool]
+    watch_club_titles_only: Setting[bool]  # Unknown.
+    display_image_url: Setting[str]  # Icon image URL.
+    background_image_url: Setting[str]
+    preferred_locale: Setting[str]  # The club language.
+    tags: Setting[List[str]]  # See xbox/webapi/api/provider/clubs/const.py for tags.
+    associated_titles: Setting[List[str]]  # List of titles associated with the club.
+    primary_color: Setting[str]
+    secondary_color: Setting[str]
+    tertiary_color: Setting[str]
 
 
 class Club(CamelCaseModel):
-    id: str  # ClubId
-    club_type: ClubTypeContainer  # Type (visibility) of club
-    creation_date_utc: datetime  # When the club was created.
-    glyph_image_url: Optional[str]  # Club's display image url
-    banner_image_url: Optional[str]  # Club's background image url
-    settings: Optional[
-        ClubRootSettings
-    ]  # Settings dictating what actions users can take
-    # within the club depending on their role.
-    followers_count: int  # Number of followers of the club.
-    members_count: int  # Number of club members.
-    moderators_count: int  # Number of club moderators.
-    recommended_count: int  # Configurable club attributes
-    requested_to_join_count: int  # Number of users requesting to join the club.
-    club_presence_count: int  # Count of members present in the club.
-    club_presence_today_count: int  # Count of members present in the club.
+    id: str
+    club_type: ClubTypeContainer  # Type of club, including genre.
+    creation_date_utc: datetime
+    glyph_image_url: Optional[str]  # Icon image URL.
+    banner_image_url: Optional[str]  # Background image url.
+    settings: Optional[ClubRootSettings]  # Dictates what actions roles can take.
+    followers_count: int
+    members_count: int
+    moderators_count: int  # Includes owner.
+    recommended_count: int
+    requested_to_join_count: int
+    club_presence_count: int  # Amount of members currently in club.
+    club_presence_today_count: int  # Amount of members who were in club today.
     club_presence_in_game_count: int
     roster: Optional[ClubRoster]
     target_roles: Optional[TargetRoleRecords]
     recommendation: Optional[ClubRecommendation]
     club_presence: Optional[List[ClubUserPresenceRecord]]
     state: ClubState
-    suspended_until_utc: Optional[
-        datetime
-    ]  # When the club remains suspended until. Null if not suspended
+    suspended_until_utc: Optional[datetime]  # Null if not suspended.
     report_count: int  # Number of reports for the club.
-    reported_items_count: int  # Number of reported items for the club.
+    reported_items_count: int
     max_members_per_club: int
     max_members_in_game: int
-    owner_xuid: Optional[str]
-    founder_xuid: str  # Club founder's Xuid.
+    owner_xuid: Optional[str]  # Null if suspended.
+    founder_xuid: str
     title_deep_links: Optional[DeepLinks]
     profile: ClubProfile  # Configurable club attributes
     is_official_club: bool
@@ -344,12 +326,12 @@ class OwnedClubsResponse(CamelCaseModel):
 
 
 class SearchClubsResponse(CamelCaseModel):
-    clubs: List[Club]  # List of clubs that match the search query
-    search_facet_results: Optional[
-        ClubSearchFacetResults
-    ]  # Facets can be used to further narrow down search results.
+    clubs: List[Club]
+
+    # Facets can be used to further narrow down search results.
     # The return map maps a facet (ie. tag or title) to a collection of search facet result objects.
     # A search facet result object describes how often a particular value of that facet occurred.
+    search_facet_results: Optional[ClubSearchFacetResults]
     recommendation_counts: Optional[Any]
     club_deep_links: Optional[DeepLinks]
 
