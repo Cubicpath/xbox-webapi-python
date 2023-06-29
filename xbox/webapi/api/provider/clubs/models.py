@@ -52,7 +52,8 @@ class ClubGenre(str, Enum):
 
 class ClubJoinability(str, Enum):
     UNKNOWN = "Unknown"
-    REQUEST_TO_JOIN = "OpenJoin"
+    OPEN = "OpenJoin"
+    REQUEST_TO_JOIN = "RequestToJoin"
     INVITE_ONLY = "InviteOnly"
 
 
@@ -102,8 +103,8 @@ class ClubSettingsContract(CamelCaseModel):
     who_can_chat: Optional[ClubRole]
     who_can_create_lfg: Optional[ClubRole]
     who_can_join_lfg: Optional[ClubRole]
-    mature_content_enabled: Optional[bool]
-    watch_club_titles_only: Optional[bool]
+    mature_content_enabled: Optional[bool]  # Streams marked as mature
+    watch_club_titles_only: Optional[bool]  # Streams of club games only
     get_recommendation_enabled: Optional[bool]
     search_enabled: Optional[bool]
     delete_enabled: Optional[bool]
