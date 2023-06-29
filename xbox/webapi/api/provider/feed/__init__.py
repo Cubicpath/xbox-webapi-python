@@ -43,10 +43,10 @@ class FeedProvider(BaseProvider):
     HEADERS_CHATFEED = {"x-xbl-contract-version": "1"}
     HEADERS_CLUBMODERATION = {"x-xbl-contract-version": "1"}
 
-    async def delete_feed_item(self, feed_item_id: str, **kwargs) -> None:
+    async def delete_feed_item(self, item_locator: str, **kwargs) -> None:
         headers = {"x-xbl-contract-version": "2"}
 
-        url = f"https://{feed_item_id}"
+        url = f"https://{item_locator}"
 
         resp = await self.client.session.delete(url, headers=headers, **kwargs)
         resp.raise_for_status()
@@ -209,8 +209,8 @@ class FeedProvider(BaseProvider):
 
         return ActivityResponse.parse_raw(resp.text)
 
-    async def pin_post(self, feed_item_id: str, **kwargs) -> None:
-        data = {"locator": feed_item_id}
+    async def pin_item(self, item_locator: str, **kwargs) -> None:
+        data = {"locator": item_locator}
 
         url = self.ACTIVITY_URL + f"/timelines/User/{self.client.xuid}/pins"
 
@@ -219,8 +219,8 @@ class FeedProvider(BaseProvider):
         )
         resp.raise_for_status()
 
-    async def unpin_post(self, feed_item_id: str, **kwargs) -> None:
-        data = {"locator": feed_item_id}
+    async def unpin_item(self, item_locator: str, **kwargs) -> None:
+        data = {"locator": item_locator}
 
         url = self.ACTIVITY_URL + f"/timelines/User/{self.client.xuid}/unpin"
 
@@ -255,12 +255,12 @@ class FeedProvider(BaseProvider):
 
     async def share_item(
         self,
-        feed_item_id: str,
+        item_locator: str,
         text: Optional[str] = None,
         parent_id: Optional[str] = None,
         **kwargs,
     ) -> PostResponse:
-        post_type_data = {"locator": feed_item_id}
+        post_type_data = {"locator": item_locator}
         if parent_id:
             post_type_data["parentId"] = parent_id
 
