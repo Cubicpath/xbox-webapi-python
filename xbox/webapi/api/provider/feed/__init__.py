@@ -14,6 +14,7 @@ from xbox.webapi.api.provider.baseprovider import BaseProvider
 from xbox.webapi.api.provider.feed.models import (
     ActivityItemType,
     ActivityResponse,
+    CommentAlertsResponse,
     ContentType,
     Message,
     MessageResponse,
@@ -310,6 +311,16 @@ class FeedProvider(BaseProvider):
         resp.raise_for_status()
 
         return PathCommentsResponse.parse_raw(resp.text)
+
+    async def get_comment_alerts(self, **kwargs) -> CommentAlertsResponse:
+        headers = self.HEADERS_COMMENTS | {"x-xbl-contract-version": "4"}
+
+        url = self.COMMENTS_URL + f"/users/xuid({self.client.xuid})/alerts"
+
+        resp = await self.client.session.get(url, headers=headers, **kwargs)
+        resp.raise_for_status()
+
+        return CommentAlertsResponse.parse_raw(resp.text)
 
     # CHAT FEED
     # ---------------------------------------------------------------------------

@@ -18,13 +18,16 @@ class ActivityItemType(str, Enum):
     FOLLOWED = "Followed"
     TEXT_POST = "TextPost"
     USER_POST = "UserPost"
-    ACHIEVEMENT = "Achievement"
+    ACHIEVEMENT = "Achievement"  # +pathtype
     ACHIEVEMENT_LEGACY = "LegacyAchievement"
-    SCREENSHOT = "Screenshot"
+    SCREENSHOT = "Screenshot"  # +pathtype
+    GAME_CLIP = "GameClip"  # pathtype
     GAME_DVR = "GameDVR"
     BROADCAST_START = "BroadcastStart"
     BROADCAST_END = "BroadcastEnd"
     GAMERTAG_CHANGED = "GamertagChanged"
+    ACTIVITY_FEED_ITEM = "ActivityFeedItem"  # pathtype
+    USER_POST_TIMELINE = "UserPostTimeline"  # pathtype
     CONTAINER = "Container"
 
 
@@ -74,13 +77,6 @@ class LinkType(str, Enum):
     DEFAULT = "Default"
 
 
-class PathType(str, Enum):
-    UNKNOWN = "Unknown"
-    ACHIEVEMENT = "Achievement"
-    ACTIVITY_FEED_ITEM = "ActivityFeedItem"
-    USER_POST_TIMELINE = "UserPostTimeline"
-
-
 class TimelineType(str, Enum):
     UNKNOWN = "Unknown"
     USER = "User"
@@ -96,6 +92,13 @@ class RarityCategory(str, Enum):
 class ItemSource(str, Enum):
     UNKNOWN = "Unknown"
     TRENDING = "Trending"
+
+
+class PostAction(str, Enum):
+    UNKNOWN = "Unknown"
+    LIKE = "Like"
+    COMMENT = "Comment"
+    SHARE = "Share"
 
 
 class Platform(str, Enum):
@@ -207,8 +210,25 @@ class UserTimeline(Timeline):
     timeline_uri: str
 
 
+class CommentAlert(CamelCaseModel):
+    id: str
+    action: PostAction
+    path: str
+    actor_xuid: str
+    actor_gamertag: str
+    parent_type: ActivityItemType
+    parent_path: str
+    owner_xuid: str
+    owner_gamertag: str
+    timestamp: datetime
+    seen: bool
+    text: Optional[str]
+    root_path: str
+    club_id: str
+
+
 class PathSummary(CamelCaseModel):
-    type: PathType
+    type: ActivityItemType  # pathtype
     path: str
     like_count: int
     comment_count: int
@@ -217,7 +237,7 @@ class PathSummary(CamelCaseModel):
 
 class Comment(CamelCaseModel):
     text: str
-    root_type: PathType
+    root_type: ActivityItemType  # pathtype
     root_path: str
     path: str
     xuid: str
@@ -345,6 +365,11 @@ class ActivityResponse(CamelCaseModel):
         smart_union = True
 
 
+class CommentAlertsResponse(CamelCaseModel):
+    alerts: List[CommentAlert]
+    continuation_token: Optional[str]
+
+
 class MessageResponse(CamelCaseModel):
     message: Message
 
@@ -375,7 +400,7 @@ class SummariesResponse(CamelCaseModel):
 class PathCommentsResponse(CamelCaseModel):
     comments: List[Comment]
     continuation_token: Optional[str]
-    type: PathType
+    type: ActivityItemType  # pathtype
     path: str
     like_count: int
     comment_count: int
