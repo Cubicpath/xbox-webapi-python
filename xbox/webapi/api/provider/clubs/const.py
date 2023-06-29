@@ -1,6 +1,28 @@
 """Web API Constants."""
 
-from typing import Final
+from typing import Final, Dict, Union
+
+from xbox.webapi.api.provider.clubs.models import ClubRole
+
+DEFAULT_SETTINGS_OPEN: Final[Dict[str, Union[str, bool]]] = {
+    "preferred_locale": "en-US",
+    "request_to_join_enabled": True,
+    "who_can_post_to_feed": ClubRole.MEMBER,
+    "who_can_invite": ClubRole.MODERATOR,
+    "who_can_chat": ClubRole.MEMBER,
+    "who_can_create_lfg": ClubRole.MEMBER,
+    "who_can_join_lfg": ClubRole.NONMEMBER,
+    "mature_content_enabled": True,
+    "watch_club_titles_only": False,
+}
+
+DEFAULT_SETTINGS_CLOSED: Final[Dict[str, Union[str, bool]]] = DEFAULT_SETTINGS_OPEN.copy()
+
+DEFAULT_SETTINGS_SECRET: Final[Dict[str, Union[str, bool]]] = DEFAULT_SETTINGS_OPEN | {
+    "request_to_join_enabled": False,
+    "who_can_join_lfg": ClubRole.MEMBER,
+}
+
 
 COMMUNICATION_TAGS: Final[frozenset] = frozenset(
     (
