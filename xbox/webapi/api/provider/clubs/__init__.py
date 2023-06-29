@@ -11,6 +11,7 @@ from uuid import UUID
 from xbox.webapi.api.provider.baseprovider import BaseProvider
 from xbox.webapi.api.provider.clubs.models import (
     Club,
+    ClubGenre,
     ClubPresence,
     ClubReservation,
     ClubRole,
@@ -112,7 +113,7 @@ class ClubProvider(BaseProvider):
         self,
         name: str,
         club_type: ClubType,
-        genre: str = "social",
+        genre: ClubGenre = ClubGenre.SOCIAL,
         title_family_id: UUID = _NULL_UUID,
         **kwargs,
     ) -> ClubSummary:
@@ -130,7 +131,7 @@ class ClubProvider(BaseProvider):
                     called claim_club_name().
             - 1023: The requested club name was rejected.
             - 1038: A TitleFamilyId value must be specified when requesting a TitleClub
-                    (genre is "title" but title_family_id is not provided).
+                    (genre is ClubGenre.TITLE but title_family_id is not provided).
             - 1041: The calling title is not authorized to perform the requested action with the requested TitleFamilyId
             - 1042: The club genre is not valid.
         """

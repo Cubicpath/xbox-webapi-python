@@ -44,6 +44,12 @@ class ClubPresence(str, Enum):
     IN_PARTY = "InParty"
 
 
+class ClubGenre(str, Enum):
+    UNKNOWN = "unknown"
+    SOCIAL = "social"  # User club
+    TITLE = "title"  # Official game club
+
+
 class ClubJoinability(str, Enum):
     UNKNOWN = "Unknown"
     REQUEST_TO_JOIN = "OpenJoin"
@@ -138,7 +144,7 @@ class ClubsSuggestResultWithText(CamelCaseModel):
 
 class ClubTypeContainer(CamelCaseModel):
     type: ClubType
-    genre: str  # social
+    genre: ClubGenre
     localized_title_family_name: Optional[str]
     title_family_id: UUID
 
@@ -188,7 +194,7 @@ class ClubSummary(CamelCaseModel):
     free_name_change: Optional[bool]
     can_delete_immediately: bool
     suspension_required_after: Optional[datetime]
-    genre: str
+    genre: ClubGenre
 
 
 class ClubUserPresenceRecord(CamelCaseModel):
