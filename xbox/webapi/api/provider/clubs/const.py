@@ -1,6 +1,6 @@
 """Web API Constants."""
 
-from typing import Final, Dict, Union
+from typing import Dict, Final, Union
 
 from xbox.webapi.api.provider.clubs.models import ClubRole
 
@@ -16,7 +16,9 @@ DEFAULT_SETTINGS_OPEN: Final[Dict[str, Union[str, bool]]] = {
     "watch_club_titles_only": False,
 }
 
-DEFAULT_SETTINGS_CLOSED: Final[Dict[str, Union[str, bool]]] = DEFAULT_SETTINGS_OPEN.copy()
+DEFAULT_SETTINGS_CLOSED: Final[
+    Dict[str, Union[str, bool]]
+] = DEFAULT_SETTINGS_OPEN.copy()
 
 DEFAULT_SETTINGS_SECRET: Final[Dict[str, Union[str, bool]]] = DEFAULT_SETTINGS_OPEN | {
     "request_to_join_enabled": False,

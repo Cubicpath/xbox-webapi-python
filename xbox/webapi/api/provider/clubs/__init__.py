@@ -196,9 +196,7 @@ class ClubProvider(BaseProvider):
 
         return ClubSummary.parse_raw(resp.text)
 
-    async def delete_club(
-        self, club_id: str, **kwargs
-    ) -> Optional[ClubReservation]:
+    async def delete_club(self, club_id: str, **kwargs) -> Optional[ClubSummary]:
         """Delete the club with the given id.
 
         If a club is not hidden and is older than one week you will receive a reservation for the club name,
@@ -222,9 +220,7 @@ class ClubProvider(BaseProvider):
         if resp.text:
             return ClubSummary.parse_raw(resp.text)
 
-    async def suspend_club(
-        self, club_id: str, delete_date: datetime, **kwargs
-    ) -> None:
+    async def suspend_club(self, club_id: str, delete_date: datetime, **kwargs) -> None:
         """Delete the club with the given id after the given date.
 
         The club is suspended in the meantime and can be restored through unsuspend_club().
@@ -233,18 +229,21 @@ class ClubProvider(BaseProvider):
             - 204: Successfully deleted club.
             - 1021: The actor specified for the suspension record is not valid.
         """
-        suspension = ClubSuspension.parse_obj({'deleteAfter': delete_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")})
+        suspension = ClubSuspension.parse_obj(
+            {"deleteAfter": delete_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")}
+        )
 
         url = self.CLUBACCOUNTS_URL + f"/clubs/clubid({club_id})/suspension/owner"
 
         resp = await self.client.session.put(
-            url, headers=self.HEADERS_CLUBACCOUNTS, json=json.loads(suspension.json()), **kwargs
+            url,
+            headers=self.HEADERS_CLUBACCOUNTS,
+            json=json.loads(suspension.json()),
+            **kwargs,
         )
         resp.raise_for_status()
 
-    async def unsuspend_club(
-            self, club_id: str, **kwargs
-    ) -> None:
+    async def unsuspend_club(self, club_id: str, **kwargs) -> None:
         """Stop the club deletion & suspension process.
 
         Codes

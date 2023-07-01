@@ -187,7 +187,7 @@ class ClubReservation(CamelCaseModel):
 
 
 class ClubSuspension(CamelCaseModel):
-    actor: str = 'owner'
+    actor: str = "owner"
     delete_after: datetime
 
 
