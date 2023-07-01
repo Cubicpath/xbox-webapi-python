@@ -28,6 +28,7 @@ class ActivityItemType(str, Enum):
     GAMERTAG_CHANGED = "GamertagChanged"
     ACTIVITY_FEED_ITEM = "ActivityFeedItem"  # pathtype
     USER_POST_TIMELINE = "UserPostTimeline"  # pathtype
+    USER_POST_TIMELINE_CHANNEL = "UserPostTimelineChannel"  # pathtype
     CONTAINER = "Container"
 
 
