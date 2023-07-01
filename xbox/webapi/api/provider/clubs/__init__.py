@@ -3,8 +3,9 @@ Clubs
 
 Manage clubs and club information.
 """
-from collections.abc import Sequence
 import json
+from collections.abc import Sequence
+from datetime import datetime
 from typing import Dict, List, Optional, Union
 from uuid import UUID
 
@@ -195,7 +196,7 @@ class ClubProvider(BaseProvider):
         return ClubSummary.parse_raw(resp.text)
 
     async def delete_club(
-        self, club_id: str, actor: Optional[str] = None, **kwargs
+        self, club_id: str, **kwargs
     ) -> Optional[ClubReservation]:
         """Delete the club with the given id.
 
@@ -207,11 +208,8 @@ class ClubProvider(BaseProvider):
         Codes
             - 204: Successfully deleted club.
             - 409: Another pending operation in progress.
-            - 1021: The actor specified for the suspension record is not valid.
         """
         url = self.CLUBACCOUNTS_URL + f"/clubs/clubid({club_id})"
-        if actor:
-            url += f"/suspension/{actor}"
 
         resp = await self.client.session.delete(
             url, headers=self.HEADERS_CLUBACCOUNTS, **kwargs
@@ -220,6 +218,44 @@ class ClubProvider(BaseProvider):
 
         if resp.text:
             return ClubReservation.parse_raw(resp.text)
+
+    async def suspend_club(
+        self, club_id: str, delete_date: datetime, **kwargs
+    ) -> None:
+        """Delete the club with the given id after the given date.
+
+        The club is suspended in the meantime and can be restored through unsuspend_club().
+
+        Codes
+            - 204: Successfully deleted club.
+            - 1021: The actor specified for the suspension record is not valid.
+        """
+        data = {'actor': 'owner', 'deleteAfter': delete_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")}
+
+        url = self.CLUBACCOUNTS_URL + f"/clubs/clubid({club_id})/suspension/owner"
+
+        resp = await self.client.session.put(
+            url, headers=self.HEADERS_CLUBACCOUNTS, json=data, **kwargs
+        )
+        resp.raise_for_status()
+
+    async def unsuspend_club(
+            self, club_id: str, **kwargs
+    ) -> None:
+        """Stop the club deletion & suspension process.
+
+        Codes
+            - 204: Successfully unsuspended club.
+            - 1021: The actor specified for the suspension record is not valid.
+        """
+        url = self.CLUBACCOUNTS_URL + f"/clubs/clubid({club_id})/suspension/owner"
+
+        resp = await self.client.session.delete(
+            url, headers=self.HEADERS_CLUBACCOUNTS, **kwargs
+        )
+        resp.raise_for_status()
+
+        return resp
 
     # CLUB HUB
     # ---------------------------------------------------------------------------
