@@ -224,6 +224,7 @@ class ClubProvider(BaseProvider):
         """Delete the club with the given id after the given date.
 
         The club is suspended in the meantime and can be restored through unsuspend_club().
+        The minimum delete_date is 168 hours (7 days) from the current time.
 
         Codes
             - 204: Successfully deleted club.
@@ -256,8 +257,6 @@ class ClubProvider(BaseProvider):
             url, headers=self.HEADERS_CLUBACCOUNTS, **kwargs
         )
         resp.raise_for_status()
-
-        return resp
 
     # CLUB HUB
     # ---------------------------------------------------------------------------
