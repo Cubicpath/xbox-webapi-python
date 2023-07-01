@@ -88,14 +88,14 @@ class ClubSettingsContract(CamelCaseModel):
     background_image_url: Optional[str]
     display_image_url: Optional[str]
     preferred_color: Optional[PreferredColor]
-    activity_feed_enabled: Optional[bool]
-    chat_enabled: Optional[bool]
-    lfg_enabled: Optional[bool]
+    activity_feed_enabled: Optional[bool]  # Permanent change
+    chat_enabled: Optional[bool]  # Permanent change
+    lfg_enabled: Optional[bool]  # Cannot be modified
     preferred_locale: Optional[str]
     request_to_join_enabled: Optional[bool]
     leave_enabled: Optional[bool]
     transfer_ownership_enabled: Optional[bool]
-    is_promoted_club: Optional[bool]
+    is_promoted_club: Optional[bool]  # Cannot be modified
     tags: Optional[List[str]]
     titles: Optional[List[str]]
     who_can_post_to_feed: Optional[ClubRole]
@@ -105,9 +105,9 @@ class ClubSettingsContract(CamelCaseModel):
     who_can_join_lfg: Optional[ClubRole]
     mature_content_enabled: Optional[bool]  # Streams marked as mature
     watch_club_titles_only: Optional[bool]  # Streams of club games only
-    get_recommendation_enabled: Optional[bool]
-    search_enabled: Optional[bool]
-    delete_enabled: Optional[bool]
+    get_recommendation_enabled: Optional[bool]  # Permanent change
+    search_enabled: Optional[bool]  # Permanent change
+    delete_enabled: Optional[bool]  # Cannot be modified
     rename_enabled: Optional[bool]
     joinability: Optional[ClubJoinability]
 
@@ -186,15 +186,22 @@ class ClubReservation(CamelCaseModel):
     expires: datetime
 
 
+class ClubSuspension(CamelCaseModel):
+    actor: str = 'owner'
+    delete_after: datetime
+
+
 class ClubSummary(CamelCaseModel):
     name: str
     owner: str
     id: str
     type: ClubType
     created: datetime
+    suspensions: Optional[List[ClubSuspension]]
     free_name_change: Optional[bool]
     can_delete_immediately: bool
     suspension_required_after: Optional[datetime]
+    reservation_duration_after_suspension_in_hours: Optional[int]
     genre: ClubGenre
 
 

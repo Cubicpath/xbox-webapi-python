@@ -3,9 +3,9 @@ Clubs
 
 Manage clubs and club information.
 """
-import json
 from collections.abc import Sequence
 from datetime import datetime
+import json
 from typing import Dict, List, Optional, Union
 from uuid import UUID
 
@@ -20,6 +20,7 @@ from xbox.webapi.api.provider.clubs.models import (
     ClubRoster,
     ClubSettingsContract,
     ClubSummary,
+    ClubSuspension,
     ClubType,
     ClubUserPresenceRecord,
     GetPresenceResponse,
@@ -200,12 +201,14 @@ class ClubProvider(BaseProvider):
     ) -> Optional[ClubReservation]:
         """Delete the club with the given id.
 
-        If a club is not hidden and is older than one week you will receive a ClubReservation for the club name,
+        If a club is not hidden and is older than one week you will receive a reservation for the club name,
         and it will be suspended for 7 days before being automatically deleted.
 
-        The ClubReservation should last for an hour after the club is deleted.
+        The reservation should last for 1 day after the club is deleted, but you can double check in the ClubSummary
+        reservation_duration_after_suspension_in_hours field.
 
         Codes
+            - 202: Successfully started suspension process.
             - 204: Successfully deleted club.
             - 409: Another pending operation in progress.
         """
@@ -217,7 +220,7 @@ class ClubProvider(BaseProvider):
         resp.raise_for_status()
 
         if resp.text:
-            return ClubReservation.parse_raw(resp.text)
+            return ClubSummary.parse_raw(resp.text)
 
     async def suspend_club(
         self, club_id: str, delete_date: datetime, **kwargs
@@ -230,12 +233,12 @@ class ClubProvider(BaseProvider):
             - 204: Successfully deleted club.
             - 1021: The actor specified for the suspension record is not valid.
         """
-        data = {'actor': 'owner', 'deleteAfter': delete_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")}
+        suspension = ClubSuspension.parse_obj({'deleteAfter': delete_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")})
 
         url = self.CLUBACCOUNTS_URL + f"/clubs/clubid({club_id})/suspension/owner"
 
         resp = await self.client.session.put(
-            url, headers=self.HEADERS_CLUBACCOUNTS, json=data, **kwargs
+            url, headers=self.HEADERS_CLUBACCOUNTS, json=json.loads(suspension.json()), **kwargs
         )
         resp.raise_for_status()
 
