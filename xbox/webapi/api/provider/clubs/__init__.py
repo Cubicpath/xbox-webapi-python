@@ -58,19 +58,24 @@ class ClubProvider(BaseProvider):
     # CLUB ACCOUNTS
     # ---------------------------------------------------------------------------
 
-    async def get_club_summary(
-        self, club_id: str, actor: Optional[str] = None, **kwargs
-    ) -> ClubSummary:
-        """Get a summary of a given club's information.
+    async def get_club_summary(self, club_id: str, **kwargs) -> ClubSummary:
+        """
+        Get a summary of a given club's information and suspensions.
 
         You must own the club to use this method.
 
-        Codes
-            - 1021: The actor specified for the suspension record is not valid.
+        XLE error codes:
+            200 - Successfully obtained club summary.
+            1001 - A requested object was not found by the service.
+            1016 - Query parameter was malformed or invalid.
+
+        Args:
+            club_id: Club ID
+
+        Returns:
+            :class:`ClubSummary`: Club Summary
         """
         url = self.CLUBACCOUNTS_URL + f"/clubs/clubid({club_id})"
-        if actor:
-            url += f"/suspension/{actor}"
 
         resp = await self.client.session.get(
             url, headers=self.HEADERS_CLUBACCOUNTS, **kwargs
@@ -80,7 +85,15 @@ class ClubProvider(BaseProvider):
         return ClubSummary.parse_raw(resp.text)
 
     async def get_clubs_owned(self, **kwargs) -> OwnedClubsResponse:
-        """Get list of clubs owned by the caller."""
+        """
+        Get list of clubs owned by the caller, along with how many clubs you can own.
+
+        XLE error codes:
+            200 - Successfully obtained owned clubs.
+
+        Returns:
+            :class:`OwnedClubsResponse`: Owned Clubs Response
+        """
         headers = self.HEADERS_CLUBACCOUNTS | {"x-xbl-contract-version": "2"}
 
         url = self.CLUBACCOUNTS_URL + f"/users/xuid({self.client.xuid})/clubsowned"
@@ -91,15 +104,22 @@ class ClubProvider(BaseProvider):
         return OwnedClubsResponse.parse_raw(resp.text)
 
     async def claim_club_name(self, name: str, **kwargs) -> ClubReservation:
-        """Reserve a club name for use in create_club().
+        """
+        Reserve a club name for use in create_club().
 
-        Codes
-            - 200: Successfully claimed club.
-            - 1000: A parallel write operation took precedence over your request.
-            - 1007: The requested club name contains invalid characters.
+        XLE error codes:
+            200 - Successfully claimed club.
+            1005 - The requested club name was too long.
+            1007 - The requested club name contains invalid characters.
                     Club names must only use letter, numbers, and spaces.
-            - 1010: The requested club name is not available.
-            - 1023: The requested club name was rejected.
+            1010 - The requested club name is not available.
+            1023 - The requested club name was rejected.
+
+        Args:
+            name: Club name to claim
+
+        Returns:
+            :class:`ClubReservation`: Club Reservation
         """
         data = {"name": name}
 
@@ -109,6 +129,7 @@ class ClubProvider(BaseProvider):
             url, headers=self.HEADERS_CLUBACCOUNTS, json=data, **kwargs
         )
         resp.raise_for_status()
+
         return ClubReservation.parse_raw(resp.text)
 
     async def create_club(
@@ -119,23 +140,35 @@ class ClubProvider(BaseProvider):
         title_family_id: UUID = _NULL_UUID,
         **kwargs,
     ) -> ClubSummary:
-        """Create a club with the given name and visibility.
+        """
+        Create a club with the given name and visibility.
 
-        If creating a public club, you must first call claim_club_name() with the name you want to use.
+        If creating a non-hidden club, you must first call claim_club_name() with the name you want to use.
 
-        Codes
-            - 201: Successfully created club.
-            - 409: Another pending operation in progress.
-            - 1007: The requested club name contains invalid characters.
+        XLE error codes:
+            201 - Successfully created club.
+            1000 - A parallel write operation took precedence over your request.
+            1005 - The requested club name was too long.
+            1007 - The requested club name contains invalid characters.
                     Club names must only use letter, numbers, and spaces.
-            - 1014: The club name has not been reserved by the calling user.
+            1014 - The club name has not been reserved by the calling user.
                     This happens when club_type is not HIDDEN and you have not
                     called claim_club_name().
-            - 1023: The requested club name was rejected.
-            - 1038: A TitleFamilyId value must be specified when requesting a TitleClub
+            1023 - The requested club name was rejected.
+            1038 - A TitleFamilyId value must be specified when requesting a TitleClub
                     (genre is ClubGenre.TITLE but title_family_id is not provided).
-            - 1041: The calling title is not authorized to perform the requested action with the requested TitleFamilyId
-            - 1042: The club genre is not valid.
+            1040 - An invalid TitleFamilyId value was specified.
+            1041 - The calling title is not authorized to perform the requested action with the requested TitleFamilyId.
+            1042 - The club genre is not valid.
+
+        Args:
+            name: Club name
+            club_type: Club visibility
+            genre: Club genre, e.g. social or title
+            title_family_id: ID used to create titleclub with
+
+        Returns:
+            :class:`ClubSummary`: Club Summary
         """
         data = {"name": name, "type": club_type, "genre": genre}
         if title_family_id.int:
@@ -153,10 +186,20 @@ class ClubProvider(BaseProvider):
     async def transfer_club_ownership(
         self, club_id: str, xuid: str, **kwargs
     ) -> ClubSummary:
-        """Transfer club ownership to the given xuid.
+        """
+        Transfer club ownership to the given xuid.
 
-        Codes
-            - 1015: The requested club is not available.
+        XLE error codes:
+            200 - Successfully transferred ownership.
+            1015 - The requested club is not available.
+            1033 - The target user for the ownership transfer must already be a moderator of the club.
+
+        Args:
+            club_id: Club ID
+            xuid: User to transfer ownership to
+
+        Returns:
+            :class:`ClubSummary`: Club Summary
         """
         data = {"method": "TransferOwnership", "user": xuid}
 
@@ -170,20 +213,28 @@ class ClubProvider(BaseProvider):
         return ClubSummary.parse_raw(resp.text)
 
     async def rename_club(self, club_id: str, name: str, **kwargs) -> ClubSummary:
-        """Rename a club with the given name.
+        """
+        Rename a club with the given name.
 
         A club can only be renamed once.
 
-        Codes
-            - 201: Successfully created club.
-            - 409: Another pending operation in progress.
-            - 1007: The requested club name contains invalid characters.
+        XLE error codes:
+            201 - Successfully created club.
+            1007 - The requested club name contains invalid characters.
                     Club names must only use letter, numbers, and spaces.
-            - 1014: The club name has not been reserved by the calling user.
+            1014 - The club name has not been reserved by the calling user.
                     This happens when club_type is not HIDDEN and you have not
                     called claim_club_name().
-            - 1023: The requested club name was rejected.
-            - 1035: The name cannot be changed for the requested club. All available name changes have been used.
+            1015 - The requested club is not available.
+            1023 - The requested club name was rejected.
+            1035 - The name cannot be changed for the requested club. All available name changes have been used.
+
+        Args:
+            club_id: Club ID
+            name: Club name to use
+
+        Returns:
+            :class:`ClubSummary`: Club Summary
         """
         data = {"method": "ChangeName", "name": name}
 
@@ -197,7 +248,8 @@ class ClubProvider(BaseProvider):
         return ClubSummary.parse_raw(resp.text)
 
     async def delete_club(self, club_id: str, **kwargs) -> Optional[ClubSummary]:
-        """Delete the club with the given id.
+        """
+        Delete the club with the given id.
 
         If a club is not hidden and is older than one week you will receive a reservation for the club name,
         and it will be suspended for 7 days before being automatically deleted.
@@ -205,10 +257,17 @@ class ClubProvider(BaseProvider):
         The reservation should last for 1 day after the club is deleted, but you can double check in the ClubSummary
         reservation_duration_after_suspension_in_hours field.
 
-        Codes
-            - 202: Successfully started suspension process.
-            - 204: Successfully deleted club.
-            - 409: Another pending operation in progress.
+        XLE error codes:
+            202 - Successfully started suspension process.
+            204 - Successfully deleted club.
+            1015 - The requested club is not available.
+            1053 - Another pending operation in progress.
+
+        Args:
+            club_id: Club ID
+
+        Returns:
+            :class:`Optional[ClubSummary]`: Club Summary if a suspension process is started, else None
         """
         url = self.CLUBACCOUNTS_URL + f"/clubs/clubid({club_id})"
 
@@ -220,15 +279,26 @@ class ClubProvider(BaseProvider):
         if resp.text:
             return ClubSummary.parse_raw(resp.text)
 
-    async def suspend_club(self, club_id: str, delete_date: datetime, **kwargs) -> None:
-        """Delete the club with the given id after the given date.
+    async def suspend_club(
+        self, club_id: str, delete_date: datetime, **kwargs
+    ) -> ClubSuspension:
+        """
+        Delete the club with the given id after the given date.
 
         The club is suspended in the meantime and can be restored through unsuspend_club().
-        The minimum delete_date is 168 hours (7 days) from the current time.
 
-        Codes
-            - 204: Successfully deleted club.
-            - 1021: The actor specified for the suspension record is not valid.
+        XLE error codes:
+            200 - Successfully started suspension process.
+            1015 - The requested club is not available.
+            1018 - The caller is not permitted to perform the requested action.
+            1021 - The actor specified for the suspension record is not valid.
+
+        Args:
+            club_id: Club ID
+            delete_date: Date to end suspension and delete the club. Minimum is 168 hours (7 days) from the current time
+
+        Returns:
+            :class:`ClubSuspension`: Club Suspension
         """
         suspension = ClubSuspension.parse_obj(
             {"deleteAfter": delete_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")}
@@ -244,15 +314,22 @@ class ClubProvider(BaseProvider):
         )
         resp.raise_for_status()
 
-    async def unsuspend_club(self, club_id: str, **kwargs) -> None:
-        """Stop the club deletion & suspension process.
+        return ClubSuspension.parse_raw(resp.text)
 
-        Codes
-            - 204: Successfully unsuspended club.
-            - 1021: The actor specified for the suspension record is not valid.
+    async def unsuspend_club(self, club_id: str, **kwargs) -> None:
+        """
+        Stop the club suspension & deletion process.
+
+        XLE error codes:
+            204 - Successfully unsuspended club.
+            1015 - The requested club is not available.
+            1018 - The caller is not permitted to perform the requested action.
+            1021 - The actor specified for the suspension record is not valid.
+
+        Args:
+            club_id: Club ID
         """
         url = self.CLUBACCOUNTS_URL + f"/clubs/clubid({club_id})/suspension/owner"
-
         resp = await self.client.session.delete(
             url, headers=self.HEADERS_CLUBACCOUNTS, **kwargs
         )
@@ -301,24 +378,58 @@ class ClubProvider(BaseProvider):
     async def _send_clubhub_decoration_request(
         self, club_ids: Union[str, List[str]], decorations: List[str], **kwargs
     ) -> SearchClubsResponse:
+        """
+        Send a clubhub request with the given decorations and return the response.
+
+        XLE error codes:
+            200 - Successfully got Clubs.
+            1018 - User not permitted to perform the requested action.
+
+        Args:
+            club_ids: List of club IDs
+            decorations: URI decorations to specify extra information to request.
+
+        Returns:
+            :class:`List[Club]`: List of Clubs
+        """
 
         url = self._create_clubhub_id_endpoint(club_ids, decorations=decorations)
+
         resp = await self.client.session.get(
             url, headers=self.HEADERS_CLUBHUB, **kwargs
         )
         resp.raise_for_status()
+
         return SearchClubsResponse.parse_raw(resp.text)
 
     async def get_club(
         self, club_id: str, decorations: Optional[List[str]] = None, **kwargs
     ) -> Club:
-        """Get a club through its id."""
+        """
+        Get a club through its id.
+
+        Args:
+            club_id: Club ID
+            decorations: URI decorations to specify extra information to request.
+
+        Returns:
+            :class:`List[Club]`: List of Clubs
+        """
         return (await self.get_clubs([club_id], decorations, **kwargs))[0]
 
     async def get_clubs(
         self, club_ids: List[str], decorations: Optional[List[str]] = None, **kwargs
     ) -> List[Club]:
-        """Get club through their ids."""
+        """
+        Get clubs through their ids.
+
+        Args:
+            club_ids: List of club IDs
+            decorations: URI decorations to specify extra information to request.
+
+        Returns:
+            :class:`List[Club]`: List of Clubs
+        """
 
         if decorations is None:
             decorations = [
@@ -340,7 +451,19 @@ class ClubProvider(BaseProvider):
     async def get_club_associations(
         self, xuid: Optional[str] = None, **kwargs
     ) -> List[Club]:
-        """Get clubs associated with the given xuid."""
+        """
+        Get clubs associated with the given xuid.
+
+        XLE error codes:
+            200 - Successfully obtained club associations.
+            1018 - User not permitted to perform the requested action.
+
+        Args:
+            xuid: User to get clubs for, defaults to caller.
+
+        Returns:
+            :class:`List[Club]`: List of Clubs
+        """
         xuid = xuid or self.client.xuid
 
         url = self._create_clubhub_id_endpoint(
@@ -350,12 +473,25 @@ class ClubProvider(BaseProvider):
             url, headers=self.HEADERS_CLUBHUB, **kwargs
         )
         resp.raise_for_status()
+
         return [club for club in SearchClubsResponse.parse_raw(resp.text).clubs]
 
     async def get_club_recommendations(
         self, title_id: Optional[str] = None, **kwargs
     ) -> List[Club]:
-        """Get clubs recommendations for the caller."""
+        """
+        Get clubs recommendations for the caller.
+
+        XLE error codes:
+            200 - Successfully obtained club recommendations.
+            1023 - Failed to get club recommendations.
+
+        Args:
+            title_id: If provided, get recommendation for the given title
+
+        Returns:
+            :class:`List[Club]`: List of Clubs
+        """
 
         method = self.client.session.post
         endpoint = "/clubs/recommendations"
@@ -378,6 +514,22 @@ class ClubProvider(BaseProvider):
         count: Optional[int] = None,
         **kwargs,
     ) -> SearchClubsResponse:
+        """
+        Search for clubs with the given query.
+
+        XLE error codes:
+            200 - Successful obtained club search results.
+            1024 - Failed to get club search results.
+
+        Args:
+            query: Search query that looks at club names/descriptions
+            titles: Title IDs that clubs must be associated with
+            tags: Tags that clubs must have
+            count: How many clubs to obtain
+
+        Returns:
+            :class:`SearchClubsResponse`: Search Clubs Response
+        """
         params = self._create_search_params(
             query, titles=titles, tags=tags, count=count
         )
@@ -387,17 +539,32 @@ class ClubProvider(BaseProvider):
             url, headers=self.HEADERS_CLUBHUB, params=params or None, **kwargs
         )
         resp.raise_for_status()
+
         return SearchClubsResponse.parse_raw(resp.text)
 
     # CLUB PRESENCE
     # ---------------------------------------------------------------------------
 
     async def get_presence_counts(self, club_id: str, **kwargs) -> GetPresenceResponse:
+        """
+        Get presence counts for the given club id.
+
+        XLE error codes:
+            200 - Successful obtained club presence counts.
+            1005 - ClubId is malformed or not within the valid range.
+
+        Args:
+            club_id: Club ID
+
+        Returns:
+            :class:`GetPresenceResponse`: Get Presence Response
+        """
         url = self.CLUBPRESENCE_URL + f"/clubs/{club_id}/users/count"
         resp = await self.client.session.get(
             url, headers=self.HEADERS_CLUBPRESENCE, **kwargs
         )
         resp.raise_for_status()
+
         return GetPresenceResponse.parse_raw(resp.text)
 
     async def set_presence_within_club(
@@ -406,8 +573,16 @@ class ClubProvider(BaseProvider):
         """Set your presence in a clubs to the given ClubPresence value.
 
         Codes:
-            - 204: Successfully changed presence.
-            - 1004: The claims are invalid.
+            204 - Successfully changed presence.
+            1004 - The claims are invalid.
+            1005 - ClubId is malformed or not within the valid range.
+            1006 - Request payload was not understood by the service.
+            1006 - Identity used in the request URL was malformed
+
+        Args:
+            club_id: Club ID
+            xuid: Xbox user ID to use
+            presence: Presence to set; InGame and InParty do not seem to work through this API
         """
         # Microsoft.Xbox.Services.dll --- xbox::services::clubs::clubs::set_presence_within_club
         data = {"userPresenceState": presence}
@@ -416,20 +591,28 @@ class ClubProvider(BaseProvider):
         resp = await self.client.session.post(
             url, headers=self.HEADERS_CLUBPRESENCE, json=data, **kwargs
         )
-        resp.raise_for_status()
+
         return resp.status == 204
 
     # CLUB PROFILE
     # ---------------------------------------------------------------------------
+
     async def update_club_profile(self, club_id: str, **setting_values) -> None:
         """Update club profile settings.
 
-        Settings are passed in as kwarg pairs. Each setting name must be a valid ClubSettingsContract field.
-        All kwargs that fail are passed in as an HTTP kwarg.
+        Settings are passed in as kwarg pairs.
 
-        Codes
-            - 413: Description is too large (500 char max).
-            - 1100: Insufficient permissions for write request.
+        XLE error codes:
+            200 - Successfully updated club profile.
+            413 - Description is too large (500 char max).
+            1004 - Unable to parse the request.
+            1006 - Text Moderation Failed to validate setting.
+            1100 - Insufficient permissions for write request.
+
+        Args:
+            club_id: Club ID
+            setting_values: Each setting name must be a valid ClubSettingsContract field
+                All values that fail are passed in as an HTTP kwarg
         """
         contract = ClubSettingsContract()
         modified_fields = []
@@ -462,13 +645,32 @@ class ClubProvider(BaseProvider):
 
     # CLUB ROSTER
     # ---------------------------------------------------------------------------
+
     async def _update_users_club_roles(
         self, club_id: str, xuid: str, advance: bool, **kwargs
     ) -> UpdateRolesResponse:
-        """Add or remove a xuid from a club id.
+        """
+        Add or remove an xuid from a club id.
 
-        Codes
-            - 1013: Cannot remove owner from the clubs.
+        Affects the following roles:
+            ClubRole.MEMBER
+            ClubRole.REQUESTED_TO_JOIN
+            ClubRole.RECOMMENDED
+            ClubRole.INVITED
+
+        XLE error codes:
+            200 - Successfully updated user's club role.
+            1013 - Cannot remove owner from the clubs.
+            1016 - Club has disabled join requests or the club is secret.
+            1019 - Target Club has been suspended.
+
+        Args:
+            club_id: Club ID
+            xuid: Xbox user ID
+            advance: Whether to add or remove to club
+
+        Returns:
+            :class:`UpdateRolesResponse`: Update Roles Response
         """
         url = self.CLUBROSTER_URL + f"/clubs/{club_id}/users/xuid({xuid})"
         if advance:
@@ -477,21 +679,37 @@ class ClubProvider(BaseProvider):
             method = self.client.session.delete
 
         resp = await method(url, headers=self.HEADERS_CLUBROSTER, **kwargs)
-
         resp.raise_for_status()
+
         return UpdateRolesResponse.parse_raw(resp.text)
 
     async def _set_users_club_roles(
         self, club_id: str, xuid: str, role: ClubRole, add_role: bool, **kwargs
     ) -> UpdateRolesResponse:
-        """Add or remove a club role from a xuid.
+        """
+        Add or remove a club role from an xuid.
 
-        Codes
-            - 1001: Caller role insufficient to perform the requested action.
-            - 1005: Contract version header was missing or invalid.
-            - 1008: Request payload was not understood by the service.
-            - 1011: Requested roles cannot be explicitly modified.
-            - 1012: Cannot modify ban status due to permissions or request format.
+        Can only modify the following roles:
+            ClubRole.MODERATOR
+            ClubRole.BANNED
+            ClubRole.FOLLOWER
+
+        XLE error codes:
+            1001 - Caller role insufficient to perform the requested action.
+            1003 - Target club does not exist.
+            1008 - Request payload was not understood by the service.
+            1011 - Requested roles cannot be explicitly modified.
+            1012 - Cannot modify ban status due to permissions or request format.
+            1015 - Cannot modify follow status due to permissions or request format.
+
+        Args:
+            club_id: Club ID
+            xuid: Xbox user ID
+            role: Club role to modify
+            add_role: Whether to add or remove role from user
+
+        Returns:
+            :class:`UpdateRolesResponse`: Update Roles Response
         """
         data = {}
         url = self.CLUBROSTER_URL + f"/clubs/{club_id}/users/xuid({xuid})/roles"
@@ -503,13 +721,29 @@ class ClubProvider(BaseProvider):
             url += f"/{role}"
 
         resp = await method(url, headers=self.HEADERS_CLUBROSTER, json=data, **kwargs)
-
         resp.raise_for_status()
+
         return UpdateRolesResponse.parse_raw(resp.text)
 
     async def add_user_to_club(
         self, club_id: str, xuid: Optional[str] = None, **kwargs
     ) -> UpdateRolesResponse:
+        """Add user to the given club.
+
+        This can result in the following roles being modified:
+            ClubRole.FOLLOWER - Given after joining
+            ClubRole.MEMBER - Given after joining
+            ClubRole.REQUESTED_TO_JOIN - Given after requesting to join a club
+            ClubRole.RECOMMENDED - Given after being recommended by a club member
+            ClubRole.INVITED - Given after being invited by a club member or moderator
+
+        Args:
+            club_id: Club ID
+            xuid: Xbox user ID. If not provided, defaults to caller xuid
+
+        Returns:
+            :class:`UpdateRolesResponse`: Update Roles Response
+        """
         xuid = xuid or self.client.xuid
 
         return await self._update_users_club_roles(
@@ -519,6 +753,15 @@ class ClubProvider(BaseProvider):
     async def remove_user_from_club(
         self, club_id: str, xuid: Optional[str] = None, **kwargs
     ) -> UpdateRolesResponse:
+        """Remove user from the given club.
+
+        Args:
+            club_id: Club ID
+            xuid: Xbox user ID. If not provided, defaults to caller xuid
+
+        Returns:
+            :class:`UpdateRolesResponse`: Update Roles Response
+        """
         xuid = xuid or self.client.xuid
 
         return await self._update_users_club_roles(
