@@ -247,7 +247,7 @@ class ClubProvider(BaseProvider):
 
         return ClubSummary.parse_raw(resp.text)
 
-    async def delete_club(self, club_id: str, **kwargs) -> Optional[ClubSummary]:
+    async def delete_club(self, club_id: str, **kwargs) -> Union[ClubSummary, ClubReservation, None]:
         """
         Delete the club with the given id.
 
@@ -258,6 +258,7 @@ class ClubProvider(BaseProvider):
         reservation_duration_after_suspension_in_hours field.
 
         XLE error codes:
+            200 - Successfully deleted club with name reservation.
             202 - Successfully started suspension process.
             204 - Successfully deleted club.
             1015 - The requested club is not available.
@@ -267,7 +268,8 @@ class ClubProvider(BaseProvider):
             club_id: Club ID
 
         Returns:
-            :class:`Optional[ClubSummary]`: Club Summary if a suspension process is started, else None
+            :class:`Union[ClubSummary, ClubReservation, None]`: Club Summary if a suspension process is started,
+            else Club Reservation if club is a non-hidden club that is successfully deleted, else None.
         """
         url = self.CLUBACCOUNTS_URL + f"/clubs/clubid({club_id})"
 
@@ -276,8 +278,12 @@ class ClubProvider(BaseProvider):
         )
         resp.raise_for_status()
 
-        if resp.text:
+        if resp.status_code == 200:
+            return ClubReservation.parse_raw(resp.text)
+        elif resp.status_code == 202:
             return ClubSummary.parse_raw(resp.text)
+        else:
+            return None
 
     async def suspend_club(
         self, club_id: str, delete_date: datetime, **kwargs
