@@ -658,12 +658,6 @@ class ClubProvider(BaseProvider):
         """
         Add or remove an xuid from a club id.
 
-        Affects the following roles:
-            ClubRole.MEMBER
-            ClubRole.REQUESTED_TO_JOIN
-            ClubRole.RECOMMENDED
-            ClubRole.INVITED
-
         XLE error codes:
             200 - Successfully updated user's club role.
             1013 - Cannot remove owner from the clubs.
@@ -706,6 +700,7 @@ class ClubProvider(BaseProvider):
             1008 - Request payload was not understood by the service.
             1011 - Requested roles cannot be explicitly modified.
             1012 - Cannot modify ban status due to permissions or request format.
+            1014 - Following the club has been disabled.
             1015 - Cannot modify follow status due to permissions or request format.
 
         Args:
@@ -736,12 +731,14 @@ class ClubProvider(BaseProvider):
     ) -> UpdateRolesResponse:
         """Add user to the given club.
 
+        You can join, ask to join, recommend others to the admins, or invite others through this method.
+
         This can result in the following roles being modified:
-            ClubRole.FOLLOWER - Given after joining
-            ClubRole.MEMBER - Given after joining
-            ClubRole.REQUESTED_TO_JOIN - Given after requesting to join a club
-            ClubRole.RECOMMENDED - Given after being recommended by a club member
-            ClubRole.INVITED - Given after being invited by a club member or moderator
+            ClubRole.FOLLOWER - Caller is Invited or club is OpenJoin
+            ClubRole.MEMBER - Caller is Invited or club is OpenJoin
+            ClubRole.REQUESTED_TO_JOIN - Caller is not Invited and club is not OpenJoin
+            ClubRole.RECOMMENDED - Caller cannot invite but is a club Member
+            ClubRole.INVITED - Caller can invite to club
 
         Args:
             club_id: Club ID
@@ -761,6 +758,9 @@ class ClubProvider(BaseProvider):
     ) -> UpdateRolesResponse:
         """Remove user from the given club.
 
+        You can uninvite or unrecommend users, as well as kick them if you have sufficient permissions.
+        If no xuid is provided, you leave the club. You cannot leave if you have ClubRole.OWNER.
+
         Args:
             club_id: Club ID
             xuid: Xbox user ID. If not provided, defaults to caller xuid
@@ -775,11 +775,30 @@ class ClubProvider(BaseProvider):
         )
 
     async def follow_club(self, club_id: str, **kwargs) -> UpdateRolesResponse:
+        """Follow a club.
+
+        You cannot follow a hidden club if you are not a member.
+
+        Args:
+            club_id: Club ID
+
+        Returns:
+            :class:`UpdateRolesResponse`: Update Roles Response
+        """
         return await self._set_users_club_roles(
             club_id, self.client.xuid, ClubRole.FOLLOWER, True, **kwargs
         )
 
     async def unfollow_club(self, club_id: str, **kwargs) -> UpdateRolesResponse:
+        """Unfollow a club.
+
+        Args:
+            club_id: Club ID
+            xuid: Xbox user ID
+
+        Returns:
+            :class:`UpdateRolesResponse`: Update Roles Response
+        """
         return await self._set_users_club_roles(
             club_id, self.client.xuid, ClubRole.FOLLOWER, False, **kwargs
         )
@@ -787,6 +806,20 @@ class ClubProvider(BaseProvider):
     async def ban_user_from_club(
         self, club_id: str, xuid: str, **kwargs
     ) -> UpdateRolesResponse:
+        """Ban user from a club.
+
+        Users with ClubRole.BANNED cannot have any other club role.
+
+        You must have ClubRole.MODERATOR.
+        You cannot ban another moderator unless you have ClubRole.OWNER.
+
+        Args:
+            club_id: Club ID
+            xuid: Xbox user ID
+
+        Returns:
+            :class:`UpdateRolesResponse`: Update Roles Response
+        """
         return await self._set_users_club_roles(
             club_id, xuid, ClubRole.BANNED, True, **kwargs
         )
@@ -794,6 +827,17 @@ class ClubProvider(BaseProvider):
     async def unban_user_from_club(
         self, club_id: str, xuid: str, **kwargs
     ) -> UpdateRolesResponse:
+        """Unban user from a club.
+
+        You must have ClubRole.MODERATOR.
+
+        Args:
+            club_id: Club ID
+            xuid: Xbox user ID
+
+        Returns:
+            :class:`UpdateRolesResponse`: Update Roles Response
+        """
         return await self._set_users_club_roles(
             club_id, xuid, ClubRole.BANNED, False, **kwargs
         )
@@ -801,13 +845,39 @@ class ClubProvider(BaseProvider):
     async def add_club_moderator(
         self, club_id: str, xuid: str, **kwargs
     ) -> UpdateRolesResponse:
+        """Give user moderator permissions for the given club.
+
+        You must have ClubRole.OWNER.
+
+        Args:
+            club_id: Club ID
+            xuid: Xbox user ID
+
+        Returns:
+            :class:`UpdateRolesResponse`: Update Roles Response
+        """
         return await self._set_users_club_roles(
             club_id, xuid, ClubRole.MODERATOR, True, **kwargs
         )
 
     async def remove_club_moderator(
-        self, club_id: str, xuid: str, **kwargs
+        self, club_id: str, xuid: Optional[str] = None, **kwargs
     ) -> UpdateRolesResponse:
+        """Remove moderator permissions from a user for the given club.
+
+        If no xuid is provided, you resign as moderator.
+
+        You must have ClubRole.OWNER to remove ClubRole.MODERATOR from other users.
+
+        Args:
+            club_id: Club ID
+            xuid: Xbox user ID. If not provided, defaults to caller xuid
+
+        Returns:
+            :class:`UpdateRolesResponse`: Update Roles Response
+        """
+        xuid = xuid or self.client.xuid
+
         return await self._set_users_club_roles(
             club_id, xuid, ClubRole.MODERATOR, False, **kwargs
         )

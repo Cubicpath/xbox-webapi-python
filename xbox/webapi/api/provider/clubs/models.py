@@ -88,8 +88,8 @@ class ClubSettingsContract(CamelCaseModel):
     background_image_url: Optional[str]
     display_image_url: Optional[str]
     preferred_color: Optional[PreferredColor]
-    activity_feed_enabled: Optional[bool]  # Permanent change
-    chat_enabled: Optional[bool]  # Permanent change
+    activity_feed_enabled: Optional[bool]  # BROKEN -- DO NOT USE
+    chat_enabled: Optional[bool]  # BROKEN -- DO NOT USE
     lfg_enabled: Optional[bool]  # Cannot be modified
     preferred_locale: Optional[str]
     request_to_join_enabled: Optional[bool]
@@ -105,10 +105,10 @@ class ClubSettingsContract(CamelCaseModel):
     who_can_join_lfg: Optional[ClubRole]
     mature_content_enabled: Optional[bool]  # Streams marked as mature
     watch_club_titles_only: Optional[bool]  # Streams of club games only
-    get_recommendation_enabled: Optional[bool]  # Permanent change
-    search_enabled: Optional[bool]  # Permanent change
+    get_recommendation_enabled: Optional[bool]  # BROKEN -- DO NOT USE
+    search_enabled: Optional[bool]  # BROKEN -- DO NOT USE
     delete_enabled: Optional[bool]  # Cannot be modified
-    rename_enabled: Optional[bool]
+    rename_enabled: Optional[bool]  # BROKEN -- DO NOT USE
     joinability: Optional[ClubJoinability]
 
 
