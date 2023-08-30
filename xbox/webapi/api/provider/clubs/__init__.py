@@ -247,7 +247,9 @@ class ClubProvider(BaseProvider):
 
         return ClubSummary.parse_raw(resp.text)
 
-    async def delete_club(self, club_id: str, **kwargs) -> Union[ClubSummary, ClubReservation, None]:
+    async def delete_club(
+        self, club_id: str, **kwargs
+    ) -> Union[ClubSummary, ClubReservation, None]:
         """
         Delete the club with the given id.
 
